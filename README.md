@@ -319,14 +319,32 @@ export WORK_PROXY=http://proxy.corp:3128
 
 ## Troubleshooting
 
+**`chezmoi update` fails with merge conflict / prompt hasn't changed after an update**
+
+This happens when a previous `chezmoi update` was interrupted by a rebase conflict and left the source repo in a paused state. Every subsequent `chezmoi update` will fail with "Pulling is not possible because you have unmerged files." Fix:
+```bash
+chezmoi cd              # cd into ~/.local/share/chezmoi
+git status              # confirm you are mid-rebase
+git rebase --abort      # discard the stuck rebase
+chezmoi update          # clean pull + apply from GitHub
+exec zsh                # reload the shell with the new config
+```
+
+**Prompt still showing old style / aliases like `dotup` not found**
+
+The new `~/.zshrc` has not been applied yet. Either a merge conflict (see above) or `chezmoi apply` has not been run since initialization. Run:
+```bash
+chezmoi apply
+exec zsh
+```
+
 **Plugins not loading**
 
-The `.zshrc` will attempt a silent `git clone` fallback if `~/.zsh/zsh-autosuggestions/` or `~/.zsh/zsh-syntax-highlighting/` is missing. If that also fails, check that `git` is installed and GitHub is reachable:
+Plugins are managed by chezmoi externals (`.chezmoiexternal.toml`). If `~/.zsh/` is empty, run:
 ```bash
-git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
-git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting ~/.zsh/zsh-syntax-highlighting
+chezmoi apply --refresh-externals
 ```
-Then re-run `chezmoi apply` to restore the vendored versions.
+This forces chezmoi to re-clone all three plugin repos (`pure`, `zsh-autosuggestions`, `zsh-syntax-highlighting`) into `~/.zsh/`.
 
 **Auto-sync not running**
 

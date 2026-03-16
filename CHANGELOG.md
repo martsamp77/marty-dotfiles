@@ -11,6 +11,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.3.1] — 2026-03-16
+
+### Fixed
+- Added `.chezmoiignore` to prevent `README.md` and `CHANGELOG.md` from being
+  deployed to `$HOME` by chezmoi (they belong in the repo, not in `~/`).
+
+### Changed
+- README Troubleshooting section updated with instructions for resolving a stuck
+  `chezmoi update` rebase conflict and for recovering from a missed `chezmoi apply`.
+
+---
+
 ## [1.3.0] — 2026-03-16
 
 ### Added
