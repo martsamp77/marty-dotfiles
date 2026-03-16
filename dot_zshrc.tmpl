@@ -292,6 +292,15 @@ if [[ -d ~/.local/share/chezmoi/.git ]]; then
     disown
 fi
 
+# ─────────────────────────────────────────────────── START DOCKER──────────
+{{ if ne .chezmoi.os "darwin" }}
+if command -v docker &>/dev/null; then
+  if service docker status 2>&1 | grep -q "not running"; then
+    sudo service docker start
+  fi
+fi
+{{ end }}
+
 
 # ─────────────────────────────────────────────────── GREETING ──────────────
 # Single-line startup message — confirms which zsh version is active.
