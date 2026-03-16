@@ -2,27 +2,27 @@
 #  ZSH CONFIGURATION - Marty’s minimal slick setup (Birmingham, AL edition)
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Add ~/.local/bin to PATH (for user-installed binaries like chezmoi)
+# Ensure local bin is in PATH (chezmoi, user scripts, etc.)
 export PATH="$HOME/.local/bin:$PATH"
 
 # ============================================================================
-# History (huge, shared across sessions, deduped, timestamped)
+# History – huge, shared, deduplicated, timestamped
 # ============================================================================
 
-HISTSIZE=1000000           # lines kept in memory
-SAVEHIST=1000000           # lines saved to disk
+HISTSIZE=1000000
+SAVEHIST=1000000
 HISTFILE=~/.zsh_history
 
-setopt INC_APPEND_HISTORY      # Append immediately after command
-setopt SHARE_HISTORY           # Share history between sessions
-setopt HIST_IGNORE_ALL_DUPS    # Never add duplicate lines
-setopt HIST_EXPIRE_DUPS_FIRST  # Expire duplicates first when trimming
-setopt HIST_IGNORE_SPACE       # Don't record commands starting with space
-setopt EXTENDED_HISTORY        # Save timestamp
-setopt HIST_NO_STORE           # Don't store history command itself
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY
+setopt HIST_NO_STORE
 
 # ============================================================================
-# Completion
+# Completion – modern, colorful, menu-driven
 # ============================================================================
 
 autoload -Uz compinit
@@ -30,20 +30,19 @@ compinit
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' format '%F{cyan}Completing %d%f'
 zstyle ':completion:*' group-name ''
-zstyle ':completion:*' menu select                      # nicer menu selection
+zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
 zstyle ':completion:*' verbose true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
-# Use LS_COLORS for completion
 eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
 # ============================================================================
-# Prompt (simple + git branch)
+# Prompt – brighter & more readable on dark terminals (PuTTY/black bg)
 # ============================================================================
 
 autoload -Uz vcs_info
@@ -51,57 +50,96 @@ precmd_vcs_info() { vcs_info }
 precmd_functions+=( precmd_vcs_info )
 setopt prompt_subst
 
-PROMPT='%F{green}%n@%m%f %F{blue}%~%f ${vcs_info_msg_0_}$ '
-zstyle ':vcs_info:git:*' formats '%F{red}(%b)%f '
+# Brighter green username@host, cyan path, red git branch, white $ prompt
+PROMPT='%F{10}%n@%m%f %F{14}%~%f ${vcs_info_msg_0_}%F{15}$ %f'
+
+zstyle ':vcs_info:git:*' formats '%F{9}(%b)%f '
 zstyle ':vcs_info:*' enable git
 
 # ============================================================================
 # General options
 # ============================================================================
 
-setopt CORRECT              # Try to correct command spelling
-setopt GLOB_DOTS            # Globbing includes dotfiles
-setopt EXTENDED_GLOB        # More powerful globbing
+setopt CORRECT
+setopt GLOB_DOTS
+setopt EXTENDED_GLOB
 
-# Emacs-style keybindings (even if EDITOR=vi)
+# Emacs keybindings (better compatibility with PuTTY/remote)
 bindkey -e
 
 # ============================================================================
-# Aliases
+# PuTTY / remote terminal fixes: Home, End, Ctrl+V paste
 # ============================================================================
 
-alias ls='ls --color=auto'
+# Home / End keys (PuTTY often sends wrong sequences)
+bindkey "${terminfo[khome]}" beginning-of-line    # Home
+bindkey "${terminfo[kend]}"  end-of-line          # End
+
+# If terminfo doesn't work (common in PuTTY/SSH), fallback sequences:
+bindkey '^[[H' beginning-of-line   # PuTTY Home
+bindkey '^[[F' end-of-line         # PuTTY End
+
+# Ctrl+V to paste from clipboard (vi-insert style)
+bindkey '^V'   put-clipboard       # Ctrl+V pastes clipboard content
+
+# ============================================================================
+# Aliases – common + OS-aware update
+# ============================================================================
+
 alias ll='ls -lah'
 alias grep='grep --color=auto'
-alias update='sudo apt update && sudo apt upgrade -y'   # Debian/Ubuntu
-alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
+alias cd..='cd ..'   # typo protection
 
-# Top 25 commands with percentages
+# Top 25 commands stats
 alias history-stats="fc -l 1 | awk '{CMD[\$2]++;count++;} END { for (a in CMD) print CMD[a] \" \" CMD[a]/count*100 \"% \" a; }' | grep -v \"./\" | column -c3 -s \" \" -t | sort -nr | nl | head -n25"
 
-# cd + ls in one command
+# cd + auto ls
 cd() { builtin cd "$@" && ls; }
 
+# OS-aware update command
+{{ if eq .chezmoi.os "darwin" }}
+alias update='brew update && brew upgrade'
+alias ls='ls -G'                    # macOS color
+{{ else }}
+alias update='sudo apt update && sudo apt upgrade -y'
+alias ls='ls --color=auto'
+{{ end }}
+
 # ============================================================================
-# Fuzzy finder (fzf) integration
+# Fuzzy finder (fzf)
 # ============================================================================
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --color=fg:250,fg+:15,bg:-1,hl:9,hl+:9,info:14,prompt:10,pointer:12,marker:12,spinner:12,header:8'
 
 # ============================================================================
-# Plugins
+# Plugins – load last (syntax highlighting especially)
 # ============================================================================
 
-# Zsh autosuggestions
 [ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ] && \
     source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# Zsh syntax highlighting (must be last!)
 [ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && \
     source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# ============================================================================
+# Auto-update dotfiles in background (quiet, only if changes exist)
+# ============================================================================
+
+if [[ -d ~/.local/share/chezmoi/.git ]]; then
+    (
+        cd ~/.local/share/chezmoi
+        git fetch --quiet origin main
+        if ! git diff --quiet HEAD origin/main; then
+            echo "→ Updating dotfiles..."
+            git pull --quiet origin main
+            chezmoi apply --refresh --force 2>/dev/null || true
+            echo "→ Dotfiles updated."
+        fi
+    ) &>/dev/null &
+fi
 
 # ============================================================================
 # End of .zshrc
