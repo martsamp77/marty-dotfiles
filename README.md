@@ -198,9 +198,34 @@ Home and End key sequences are bound both via `terminfo` (standard) and raw esca
 
 ## Quick Start
 
-### 1. Install zsh (if not already the default)
+### One-liner (recommended)
 
-**macOS** — zsh is default since macOS Catalina.
+Paste this into any terminal on a new machine — it handles everything automatically:
+
+```bash
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
+```
+
+The script detects macOS / Ubuntu / WSL and:
+1. Installs Homebrew (macOS only, if missing)
+2. Installs `zsh`, `git`, `fzf`, `chezmoi` via the right package manager
+3. Sets zsh as the default shell
+4. Generates `en_US.UTF-8` locale (Ubuntu — fixes prompt symbol rendering)
+5. Tries SSH auth to GitHub; falls back to HTTPS automatically
+6. Runs `chezmoi init --apply` to pull the repo and deploy everything
+
+Then reload the shell:
+```bash
+exec zsh
+```
+
+---
+
+### Manual step-by-step (if you prefer)
+
+#### 1. Install zsh
+
+**macOS** — already the default since Catalina.
 
 **Ubuntu / WSL / AWS:**
 ```bash
@@ -209,20 +234,20 @@ chsh -s $(which zsh)
 # Log out and back in (or reconnect via SSH)
 ```
 
-### 2. Install chezmoi
+#### 2. Install chezmoi
 
 **macOS:**
 ```bash
 brew install chezmoi
 ```
 
-**Ubuntu / WSL / AWS (no Homebrew):**
+**Ubuntu / WSL / AWS:**
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-### 3. Initialize and apply dotfiles
+#### 3. Initialize and apply dotfiles
 
 ```bash
 # SSH (recommended — passwordless if your key is added to GitHub):
@@ -232,34 +257,25 @@ chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git
 chezmoi init --apply https://github.com/martsamp77/marty-dotfiles.git
 ```
 
-This single command:
-- Clones the repo to `~/.local/share/chezmoi/`
-- Renders all templates for your OS
-- Copies `dot_zsh/` → `~/.zsh/` (plugins land on disk, no separate clone)
-- Copies `dot_zshrc` → `~/.zshrc`
-
-### 4. Reload the shell
+#### 4. Reload the shell
 
 ```bash
-source ~/.zshrc
-# or open a new terminal / reconnect via SSH
+exec zsh
 ```
 
-Your shell now has full history, syntax highlighting, autosuggestions, the prompt, and auto-sync on every future session.
+Your shell now has the Pure prompt, syntax highlighting, autosuggestions, and auto-sync on every future session.
 
 ---
 
-## Auto-apply on SSH Login (One-liner Bootstrap)
+## Auto-apply on SSH Login / EC2 User-Data
 
-For a fresh server where you want dotfiles applied the moment you log in for the first time, add this to the server's `~/.profile` or run it in a user-data script:
+For a fresh server, run the install script directly or embed it in a user-data script:
 
 ```bash
-# Install chezmoi and apply dotfiles in one shot
-sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin init --apply \
-    git@github.com:martsamp77/marty-dotfiles.git
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
 ```
 
-After that, the auto-sync block in `.zshrc` handles all future updates automatically.
+After the first apply, the auto-sync block in `.zshrc` handles all future updates automatically — every new SSH session quietly checks for changes in the background.
 
 ---
 

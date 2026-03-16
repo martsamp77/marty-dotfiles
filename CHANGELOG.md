@@ -11,6 +11,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.0] — 2026-03-16
+
+### Added
+- `install.sh` — one-command bootstrap script for new machines.
+  Detects macOS / Ubuntu / WSL, installs Homebrew (macOS), zsh, git, fzf,
+  chezmoi, sets zsh as the default shell, generates the `en_US.UTF-8` locale
+  (fixes `❯` rendering as a square on Ubuntu), and runs `chezmoi init --apply`.
+  Tries SSH first, falls back to HTTPS automatically.
+  One-liner: `bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)`
+- Added `install.sh` to `.chezmoiignore` so it stays in the repo but is not
+  deployed to `$HOME`.
+
+---
+
 ## [1.3.2] — 2026-03-16
 
 ### Fixed

@@ -6,6 +6,7 @@
 #  and any file that belongs in the repo but not in your home directory.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Repository documentation — lives in the repo, not in ~/
+# Repository documentation and scripts — live in the repo, not in ~/
 README.md
 CHANGELOG.md
+install.sh
