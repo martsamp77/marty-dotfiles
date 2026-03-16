@@ -43,6 +43,13 @@ setopt EXTENDED_HISTORY         # Record timestamp + elapsed time per entry
 setopt HIST_NO_STORE            # Don't store the `history` command itself
 
 
+# ─────────────────────────────────────────────────── FPATH PLUGINS ─────────
+# Pure is downloaded by chezmoi externals (.chezmoiexternal.toml) to
+# ~/.zsh/pure/ on every machine.  Just add it to fpath before compinit.
+# The guard handles the brief window before the first `chezmoi apply` runs.
+[[ -d "$HOME/.zsh/pure" ]] && fpath+=("$HOME/.zsh/pure")
+
+
 # ─────────────────────────────────────────────────── COMPLETION ────────────
 # Smart, colorful, menu-driven tab completion.
 # .zcompdump is rebuilt at most once per 24 hours to keep startup fast.
@@ -73,23 +80,26 @@ if command -v dircolors &>/dev/null; then
 fi
 
 
-# ─────────────────────────────────────────────────── PROMPT ────────────────
-# Bright green user@host · cyan path · red git branch · white $
+# ─────────────────────────────────────────────────── PROMPT — Pure ─────────
+# Pure is a minimal two-line prompt: path + git info on line 1, ❯ on line 2.
+# It requires no Nerd Fonts and works identically over SSH, PuTTY, WSL, and
+# native terminals.  Fetched by chezmoi to ~/.zsh/pure/ (.chezmoiexternal.toml).
 #
-# Color codes are ANSI bright variants chosen to be readable on dark
-# backgrounds — PuTTY default black, SSH sessions, tmux, Windows Terminal:
-#   %F{10} = bright green   %F{14} = bright cyan
-#   %F{9}  = bright red     %F{15} = bright white
+# ❯ turns red on non-zero exit, magenta on success.
+# user@host is hidden on local sessions; appears automatically over SSH.
+# Git status is fetched asynchronously — never delays the prompt.
 
-autoload -Uz vcs_info
-precmd_vcs_info() { vcs_info }
-precmd_functions+=( precmd_vcs_info )
-setopt PROMPT_SUBST
+autoload -U promptinit; promptinit
+prompt pure
 
-zstyle ':vcs_info:git:*' formats '%F{9}(%b)%f '
-zstyle ':vcs_info:*' enable git
-
-PROMPT='%F{10}%n@%m%f %F{14}%~%f ${vcs_info_msg_0_}%F{15}$ %f'
+# Color overrides — tuned for dark backgrounds (PuTTY, SSH, Windows Terminal)
+zstyle :prompt:pure:path           color cyan
+zstyle :prompt:pure:git:branch     color 39        # bright blue (#0087ff)
+zstyle :prompt:pure:git:dirty      color yellow
+zstyle :prompt:pure:prompt:success color magenta
+zstyle :prompt:pure:prompt:error   color red
+zstyle :prompt:pure:host           color green
+zstyle :prompt:pure:user           color green
 
 
 # ─────────────────────────────────────────────────── OPTIONS ───────────────
@@ -160,46 +170,49 @@ export FZF_DEFAULT_OPTS='
 
 # ─────────────────────────────────────────────────── PLUGINS ───────────────
 #
-# WHY THIS APPROACH — the ~/.zsh/ directory
-# ──────────────────────────────────────────
-# Rather than running a script that clones plugin repos at setup time, both
-# plugins are *vendored* directly inside the chezmoi source repository under
-# dot_zsh/ (which chezmoi maps to ~/.zsh/ on every machine).
+# Both plugins are managed as chezmoi externals (see .chezmoiexternal.toml).
+# chezmoi clones them into ~/.zsh/ on `chezmoi apply` and re-pulls them
+# automatically every 168 h (weekly) on `chezmoi update`.
 #
-# When you run `chezmoi apply`, the full plugin source trees are copied to
-# ~/.zsh/zsh-autosuggestions/ and ~/.zsh/zsh-syntax-highlighting/.
-# No internet access is required at shell startup — the files are already
-# on disk.  The trade-off is a larger git repo, but the benefit is that
-# plugins work immediately on air-gapped servers, new EC2 instances, and
-# fresh WSL setups with zero extra steps.
+# To force an immediate refresh:  chezmoi apply --refresh-externals
 #
-# To update a plugin: cd into its dot_zsh/ subdirectory, git pull, then
-# commit the changes to marty-dotfiles.
-#
-# FALLBACK: If a plugin directory is somehow missing (e.g. a partial apply),
-# _zsh_plugin_load attempts a silent git-clone so the shell still starts
-# without errors.
+# The [[ -f ]] guards are a safety net for the brief window on a brand-new
+# machine before the first `chezmoi apply` has completed.
 #
 # NOTE: zsh-syntax-highlighting MUST always be sourced last.
 
-_zsh_plugin_load() {
-    local name="$1" repo="$2" entry="$3"
-    local dir="$HOME/.zsh/$name"
-    if [[ ! -f "$dir/$entry" ]] && command -v git &>/dev/null; then
-        git clone --depth=1 "https://github.com/$repo" "$dir" &>/dev/null
-    fi
-    [[ -f "$dir/$entry" ]] && source "$dir/$entry"
-}
+# ── Syntax highlight color scheme ───────────────────────────────────────────
+# Must be declared before zsh-syntax-highlighting is sourced.
+# Colors tuned for dark terminal backgrounds (PuTTY, WSL, SSH, macOS dark mode).
+typeset -A ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[command]='fg=green,bold'           # valid command — bright green
+ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=red,bold'       # typo / not found — red bold
+ZSH_HIGHLIGHT_STYLES[alias]='fg=cyan,bold'              # alias name
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=cyan'                 # shell builtin (cd, echo…)
+ZSH_HIGHLIGHT_STYLES[function]='fg=cyan'                # function name
+ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=yellow,bold'    # if, for, while…
+ZSH_HIGHLIGHT_STYLES[precommand]='fg=yellow'            # sudo, env, noglob…
+ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg=magenta' # -v, -r…
+ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=magenta' # --force, --verbose…
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[path]='fg=white,underline'         # existing file/dir path
+ZSH_HIGHLIGHT_STYLES[redirection]='fg=magenta,bold'     # >, >>, |, <
+ZSH_HIGHLIGHT_STYLES[comment]='fg=8'                    # # comments — dark grey
+ZSH_HIGHLIGHT_STYLES[assign]='fg=white'                 # VAR=value
 
 # Fish-shell-style ghost-text suggestions drawn from command history.
 # Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
-_zsh_plugin_load zsh-autosuggestions  zsh-users/zsh-autosuggestions  zsh-autosuggestions.zsh
+[[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+    source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Real-time syntax coloring as you type.
 #   green  = recognized command       red    = unknown command
 #   yellow = command arguments        cyan   = built-in / keyword
 # Sourced last so it can wrap all previously-defined widgets.
-_zsh_plugin_load zsh-syntax-highlighting  zsh-users/zsh-syntax-highlighting  zsh-syntax-highlighting.zsh
+[[ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+    source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 
 # ─────────────────────────────────────────────────── AUTO-SYNC ─────────────
