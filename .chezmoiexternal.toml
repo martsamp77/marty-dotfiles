@@ -1,0 +1,40 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  .chezmoiexternal.toml
+#
+#  Declares third-party plugins as external git repositories managed by
+#  chezmoi.  On `chezmoi apply`, chezmoi clones each repo to the target path
+#  if it is not already present.  On `chezmoi update`, it re-pulls any that
+#  are older than refreshPeriod (set to 168 h = weekly).
+#
+#  Force an immediate refresh of all externals:
+#    chezmoi apply --refresh-externals
+#
+#  This replaces the old approach of committing full plugin source trees
+#  directly into the dotfiles repo (dot_zsh/pure, dot_zsh/zsh-autosuggestions,
+#  dot_zsh/zsh-syntax-highlighting).  The repo is now smaller and plugin
+#  versions stay current automatically.
+#
+#  All target paths are relative to $HOME.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Pure prompt ──────────────────────────────────────────────────────────────
+# Minimal two-line prompt.  No Nerd Fonts required.  SSH-safe.
+# Loaded via $fpath in ~/.zshrc.
+[".zsh/pure"]
+    type          = "git-repo"
+    url           = "https://github.com/sindresorhus/pure.git"
+    refreshPeriod = "168h"
+
+# ── zsh-autosuggestions ──────────────────────────────────────────────────────
+# Fish-shell-style ghost-text command suggestions from history.
+[".zsh/zsh-autosuggestions"]
+    type          = "git-repo"
+    url           = "https://github.com/zsh-users/zsh-autosuggestions.git"
+    refreshPeriod = "168h"
+
+# ── zsh-syntax-highlighting ──────────────────────────────────────────────────
+# Real-time command-line colorization.  Must be sourced last in ~/.zshrc.
+[".zsh/zsh-syntax-highlighting"]
+    type          = "git-repo"
+    url           = "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    refreshPeriod = "168h"

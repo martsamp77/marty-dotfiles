@@ -35,28 +35,43 @@ chezmoi uses special prefixes to map source filenames to home-directory paths:
 | `dot_zsh/` | `~/.zsh/` (entire directory tree) |
 | `dot_zsh/zsh-autosuggestions/` | `~/.zsh/zsh-autosuggestions/` |
 
-### The `dot_zsh/` directory — vendored plugins
+### Plugin management — `.chezmoiexternal.toml`
 
-The `dot_zsh/` directory maps to `~/.zsh/` on every machine. It contains the **full source trees** for both Zsh plugins, committed directly into this repository:
+Plugins are **not** committed into this repository. Instead, they are declared as external git repositories in [`.chezmoiexternal.toml`](.chezmoiexternal.toml) at the repo root:
 
+```toml
+[".zsh/pure"]
+    type          = "git-repo"
+    url           = "https://github.com/sindresorhus/pure.git"
+    refreshPeriod = "168h"
+
+[".zsh/zsh-autosuggestions"]
+    type          = "git-repo"
+    url           = "https://github.com/zsh-users/zsh-autosuggestions.git"
+    refreshPeriod = "168h"
+
+[".zsh/zsh-syntax-highlighting"]
+    type          = "git-repo"
+    url           = "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    refreshPeriod = "168h"
 ```
-dot_zsh/
-├── zsh-autosuggestions/      →  ~/.zsh/zsh-autosuggestions/
-└── zsh-syntax-highlighting/  →  ~/.zsh/zsh-syntax-highlighting/
-```
 
-This is called **vendoring**. Instead of having a setup script clone the plugin repos over the internet at install time, the plugin files are already in the chezmoi repo. Running `chezmoi apply` copies them to the right place — no network access needed at setup or at shell startup.
+When you run `chezmoi apply`, chezmoi clones each repo to the target path (`~/.zsh/<name>/`) if it is not already present. When you run `chezmoi update`, chezmoi re-pulls any that are older than `refreshPeriod` (168 h = weekly). Plugins are never stored in the dotfiles repo — the repo stays small and plugins stay current.
 
-**Why vendor instead of using `.chezmoiexternal.toml`?**
+**Key commands:**
 
-chezmoi also supports pulling plugins from URLs at apply time via `.chezmoiexternal.toml`. Vendoring was chosen here because:
+| Goal | Command |
+|---|---|
+| Install all plugins on a new machine | `chezmoi apply` |
+| Force-refresh all plugins right now | `chezmoi apply --refresh-externals` |
+| Auto-update plugins + dotfiles | `chezmoi update` (runs weekly refresh automatically) |
 
-- Works on air-gapped servers and restricted EC2 instances with no outbound git/HTTPS
-- Plugins are at a known, tested version — no surprise breakage from upstream changes
-- `chezmoi apply` completes in one step with zero extra network calls
-- The plugins work immediately after SSH login on a freshly initialized machine
+**What happens on a brand-new machine:**
 
-The trade-off is a larger repository. To update a plugin, `cd` into its subdirectory, `git pull`, then commit the change to `marty-dotfiles`.
+1. `chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git`
+2. chezmoi fetches `.chezmoiexternal.toml`, clones all three plugin repos to `~/.zsh/`
+3. `.zshrc` is deployed and sources the plugins from `~/.zsh/`
+4. Everything works — no separate install step needed
 
 ---
 
@@ -89,6 +104,33 @@ marty@myserver ~/projects/foo (main) $
 - `%F{9}` bright red — git branch (via `vcs_info`, built into zsh)
 - Chosen specifically for readability on **dark backgrounds**: PuTTY default black, SSH sessions, Windows Terminal dark themes, tmux
 
+### Pure Prompt
+
+[Pure](https://github.com/sindresorhus/pure) — 14k stars, minimal, no Nerd Fonts required, works identically over SSH/PuTTY/WSL/macOS. Vendored in `dot_zsh/pure/` alongside the other plugins.
+
+```
+~/dev/myproject master*
+❯
+```
+
+- Two-line layout — path + git status on line 1, `❯` on line 2
+- `❯` turns **red** on a non-zero exit, **magenta** on success
+- User@host only shown during SSH sessions (hidden locally)
+- Git status fetched **asynchronously** — never delays the prompt
+
+Color overrides for dark backgrounds are applied via `zstyle`:
+
+| Element | Color |
+|---|---|
+| Path | Cyan |
+| Git branch | Bright blue (#0087ff) |
+| Dirty indicator | Yellow |
+| Prompt success | Magenta |
+| Prompt error | Red |
+| User / host (SSH) | Green |
+
+**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/pure/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
+
 ### zsh-autosuggestions
 
 [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text command suggestions as you type, drawn from your command history — identical to the Fish shell experience.
@@ -98,7 +140,7 @@ marty@myserver ~/projects/foo (main) $
 - Press **Ctrl+→** to accept one word at a time
 - Completely non-intrusive — keep typing to ignore it
 
-**Why it's vendored in `dot_zsh/`:** The plugin is sourced from `~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh`. chezmoi deploys that file by copying `dot_zsh/zsh-autosuggestions/` to `~/.zsh/zsh-autosuggestions/` at apply time.
+**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/zsh-autosuggestions/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
 
 ### zsh-syntax-highlighting
 
@@ -112,7 +154,7 @@ marty@myserver ~/projects/foo (main) $
 
 **Why load it last:** Syntax highlighting works by wrapping zsh line editor (ZLE) widgets. It must be sourced _after_ all other plugins and key bindings so it can wrap them all correctly. Loading it earlier breaks other widget bindings.
 
-**Why it's vendored in `dot_zsh/`:** Same pattern as autosuggestions — deployed to `~/.zsh/zsh-syntax-highlighting/` by chezmoi.
+**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/zsh-syntax-highlighting/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
 
 ### fzf (fuzzy finder)
 
