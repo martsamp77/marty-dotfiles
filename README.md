@@ -177,15 +177,7 @@ The entire process runs in a background subshell (`&` + `disown`) so it **never 
 
 ### PuTTY / SSH terminal compatibility
 
-Key bindings are set with `bindkey -e` (Emacs mode) for maximum compatibility across:
-
-- PuTTY (Windows SSH client)
-- MobaXterm
-- Windows Terminal + WSL
-- macOS Terminal / iTerm2
-- Any standard SSH session
-
-Home and End key sequences are bound both via `terminfo` (standard) and raw escape sequences (`^[[H` / `^[[F`) as a fallback for PuTTY, which often sends the wrong sequences.
+Key bindings are set with `bindkey -e` (Emacs mode) for maximum compatibility across PuTTY, MobaXterm, Windows Terminal + WSL, macOS Terminal, and any standard SSH session. Home and End are bound to multiple escape sequences so they work correctly regardless of PuTTY's terminal type setting. See [PuTTY Setup](#putty-setup-windows) below for the full recommended configuration.
 
 ### OS-aware aliases (via chezmoi templates)
 
@@ -276,6 +268,77 @@ bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/ma
 ```
 
 After the first apply, the auto-sync block in `.zshrc` handles all future updates automatically — every new SSH session quietly checks for changes in the background.
+
+---
+
+## PuTTY Setup (Windows)
+
+These settings make PuTTY work well with this config — correct Unicode rendering, comfortable window size, readable fonts, and stable SSH sessions. Apply them to your saved session, then hit **Save** before closing.
+
+### Installing Cascadia Code
+
+The Pure prompt uses `❯` (U+276F). PuTTY does not fall back to a secondary font for missing glyphs, so the font you choose must contain that character. Cascadia Code covers it.
+
+1. Download the latest release from [github.com/microsoft/cascadia-code/releases](https://github.com/microsoft/cascadia-code/releases)
+2. Extract the zip, open the `ttf/` folder
+3. Select all `.ttf` files → right-click → **Install for all users** (puts them in `C:\Windows\Fonts` where PuTTY can always see them)
+
+### Recommended PuTTY settings
+
+#### Window → set the size of the window
+
+| Setting | Value | Why |
+|---|---|---|
+| Columns | `120` | Wider default; avoids wrapping on most commands |
+| Rows | `40` | Taller default; more context without scrolling |
+
+Changes take effect at launch. You can still drag-resize during a session.
+
+#### Window → Appearance
+
+| Setting | Value | Why |
+|---|---|---|
+| Cursor appearance | Underline | Cleaner look |
+| Cursor blinks | Enabled | Easier to locate the cursor |
+| Font | Cascadia Code Light, size 11 | Supports `❯` and all Unicode glyphs used by Pure |
+| Font quality | ClearType | Smooth anti-aliasing; improves readability without blur |
+| Gap between text and window edge | 3 px | Subtle border; less cramped feel |
+| Hide mouse pointer when typing | Enabled | Keeps the interface clean |
+
+#### Window → Translation
+
+| Setting | Value | Why |
+|---|---|---|
+| Remote character set | **UTF-8** | **Required** — fixes missing/square characters; handles all Unicode (emoji, line-drawing, `❯`) |
+| Handling of line drawing characters | Use Unicode line drawing code points | Boxes and arrows render correctly in tools like Midnight Commander |
+
+#### Window → Behaviour
+
+| Setting | Value |
+|---|---|
+| System menu appears on ALT-Space | Enabled |
+
+#### Connection
+
+| Setting | Value | Why |
+|---|---|---|
+| Seconds between keepalives | `30` | Prevents idle timeout on servers and AWS instances |
+
+#### Window → scrollback
+
+| Setting | Value | Why |
+|---|---|---|
+| Scrollback lines | `20000` | Enough history to review long build outputs without loss |
+
+#### Session → Logging *(optional)*
+
+Enable **All session output** and set a path like:
+
+```
+C:\PuTTYLogs\&H_&Y&M&D.log
+```
+
+`&H` expands to the hostname, `&Y&M&D` to the date — each session gets its own timestamped log file automatically.
 
 ---
 
