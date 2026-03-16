@@ -117,12 +117,38 @@ setopt NO_BEEP          # Silence all terminal bell characters
 # vi mode is great locally but breaks Home/End/arrow keys in many SSH clients.
 bindkey -e
 
-# Home / End — terminfo covers most terminals; raw escape sequences are a
-# PuTTY-specific fallback that fires when the terminfo entry is wrong.
+# Home / End — terminfo covers most terminals; raw escape sequences are
+# fallbacks for terminals that send them regardless of $TERM.
+#   ^[[H / ^[[F  — xterm / PuTTY / most SSH clients
+#   ^[OH / ^[OF  — VT100 application-cursor mode (Windows Terminal, some SSH)
+#   ^[[1~ / ^[[4~ — rxvt / older xterm / some WSL configurations
 bindkey "${terminfo[khome]}" beginning-of-line
 bindkey "${terminfo[kend]}"  end-of-line
-bindkey '^[[H' beginning-of-line    # PuTTY / xterm fallback
-bindkey '^[[F' end-of-line          # PuTTY / xterm fallback
+bindkey '^[[H'  beginning-of-line
+bindkey '^[[F'  end-of-line
+bindkey '^[OH'  beginning-of-line   # Windows Terminal / VT100 app-cursor mode
+bindkey '^[OF'  end-of-line
+bindkey '^[[1~' beginning-of-line   # rxvt / older xterm
+bindkey '^[[4~' end-of-line
+
+# Keypad Enter — application keypad mode sends ^[OM instead of a plain newline.
+# Binding it to accept-line makes it behave identically to the main Enter key.
+bindkey '^[OM' accept-line
+
+# Ctrl+V paste — on WSL the Windows clipboard is accessible via powershell.exe.
+# On every other platform (macOS, plain Linux) Ctrl+V is left as quoted-insert
+# (the standard emacs binding that lets you type a literal control character).
+if [[ -f /proc/version ]] && grep -qi microsoft /proc/version 2>/dev/null; then
+    _wsl_paste() {
+        local clip
+        clip=$(powershell.exe -NoProfile -NonInteractive -Command \
+               'Get-Clipboard' 2>/dev/null | tr -d '\r')
+        LBUFFER+="$clip"
+        zle redisplay
+    }
+    zle -N _wsl_paste
+    bindkey '^V' _wsl_paste
+fi
 
 
 # ─────────────────────────────────────────────────── ALIASES ───────────────
@@ -254,4 +280,4 @@ print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
 #   MAJOR — incompatible structural change (new bootstrap dependency, etc.)
 #   MINOR — new feature or significant improvement
 #   PATCH — bug fix, comment correction, cosmetic tweak
-export DOTFILES_VERSION="1.4.0"
+export DOTFILES_VERSION="1.4.1"

@@ -11,6 +11,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.1] — 2026-03-16
+
+### Fixed
+- **Home key on WSL / Windows Terminal**: Added `^[OH` (VT100 application-cursor) and
+  `^[[1~` (rxvt / older xterm) as additional `beginning-of-line` bindings so Home works
+  across all terminal variants, not just PuTTY/xterm.
+- **End key on WSL / Windows Terminal**: Same treatment — added `^[OF` and `^[[4~`.
+- **Keypad Enter**: Bound `^[OM` (application-keypad-mode Enter) to `accept-line` so the
+  numeric-keypad Enter key behaves identically to the main keyboard Enter.
+- **Ctrl+V paste on WSL**: Added a WSL-only `_wsl_paste` widget that reads from the
+  Windows clipboard via `powershell.exe -Command Get-Clipboard` and inserts the text at
+  the cursor. Bound to `^V` only when running inside WSL; all other platforms keep the
+  default emacs `quoted-insert` binding.
+
+---
+
 ## [1.4.0] — 2026-03-16
 
 ### Added
