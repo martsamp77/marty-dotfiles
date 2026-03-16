@@ -1,0 +1,11 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  .chezmoiignore
+#
+#  Files listed here exist in the chezmoi SOURCE directory but are NOT
+#  deployed to $HOME.  Use this for repository metadata, documentation,
+#  and any file that belongs in the repo but not in your home directory.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Repository documentation — lives in the repo, not in ~/
+README.md
+CHANGELOG.md
