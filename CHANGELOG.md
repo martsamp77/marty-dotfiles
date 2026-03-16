@@ -11,6 +11,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.3.2] — 2026-03-16
+
+### Fixed
+- Renamed `dot_zshrc` → `dot_zshrc.tmpl` so chezmoi processes `{{ if eq .chezmoi.os }}`
+  template blocks at apply time.  Without the `.tmpl` suffix, chezmoi copies the file
+  verbatim and zsh fails to start with "command not found: eq" and "parse error near end".
+
+---
+
 ## [1.3.1] — 2026-03-16
 
 ### Fixed
