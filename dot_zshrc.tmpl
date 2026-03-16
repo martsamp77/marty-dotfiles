@@ -22,6 +22,15 @@ export PATH="$HOME/.local/bin:$PATH"
 if   [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew    ]]; then eval "$(/usr/local/bin/brew shellenv)"
 fi
+{{ else }}
+# ── Linux / WSL: enforce UTF-8 locale ───────────────────────────────────────
+# Pure's ❯ symbol (U+276F) and many other Unicode glyphs require the shell to
+# speak UTF-8.  Ubuntu WSL sometimes ships with a minimal locale; this ensures
+# LANG is always set correctly regardless of /etc/default/locale.
+# If you see "locale: Cannot set LC_ALL to default locale" run once:
+#   sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 {{ end }}
 
 
@@ -135,14 +144,31 @@ bindkey '^[[4~' end-of-line
 # Binding it to accept-line makes it behave identically to the main Enter key.
 bindkey '^[OM' accept-line
 
-# Ctrl+V paste — on WSL the Windows clipboard is accessible via powershell.exe.
-# On every other platform (macOS, plain Linux) Ctrl+V is left as quoted-insert
-# (the standard emacs binding that lets you type a literal control character).
+# Ctrl+V paste — on WSL the Windows clipboard is readable via powershell.exe.
+# On every other platform (macOS, plain Linux) Ctrl+V keeps the default emacs
+# binding (quoted-insert — inserts a literal control character).
+#
+# powershell.exe is normally on PATH via WSL interop.  We also try the full
+# Windows path as a fallback in case interop is partially configured.
 if [[ -f /proc/version ]] && grep -qi microsoft /proc/version 2>/dev/null; then
     _wsl_paste() {
-        local clip
-        clip=$(powershell.exe -NoProfile -NonInteractive -Command \
-               'Get-Clipboard' 2>/dev/null | tr -d '\r')
+        local clip psexe
+        # Resolve powershell.exe — short name first, absolute path as fallback.
+        if   command -v powershell.exe &>/dev/null; then
+            psexe=powershell.exe
+        elif [[ -x /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe ]]; then
+            psexe=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+        fi
+        if [[ -z "$psexe" ]]; then
+            zle -M "[paste] powershell.exe not found — is WSL interop enabled?"
+            return
+        fi
+        clip=$("$psexe" -NoProfile -NonInteractive -Command 'Get-Clipboard' \
+               2>/dev/null | tr -d '\r')
+        if [[ -z "$clip" ]]; then
+            zle -M "[paste] clipboard is empty"
+            return
+        fi
         LBUFFER+="$clip"
         zle redisplay
     }
@@ -280,4 +306,4 @@ print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
 #   MAJOR — incompatible structural change (new bootstrap dependency, etc.)
 #   MINOR — new feature or significant improvement
 #   PATCH — bug fix, comment correction, cosmetic tweak
-export DOTFILES_VERSION="1.4.1"
+export DOTFILES_VERSION="1.4.2"

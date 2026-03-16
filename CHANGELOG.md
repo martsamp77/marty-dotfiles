@@ -11,6 +11,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.2] — 2026-03-16
+
+### Fixed
+- **Ctrl+V paste (WSL) — improved reliability**: `_wsl_paste` widget now tries
+  `powershell.exe` by short name first, then falls back to the full Windows path
+  (`/mnt/c/Windows/System32/.../powershell.exe`). Displays a visible error message
+  if interop is unavailable or the clipboard is empty instead of silently doing nothing.
+- **UTF-8 locale enforcement on Linux/WSL**: Added `export LANG/LC_ALL=en_US.UTF-8`
+  (using `${VAR:-default}` so an explicitly-set locale is never overridden). Fixes
+  `❯` and other Unicode glyphs appearing as squares on fresh Ubuntu/WSL installs
+  where `/etc/default/locale` has not been generated.
+  To generate the locale if missing: `sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8`
+
+---
+
 ## [1.4.1] — 2026-03-16
 
 ### Fixed
