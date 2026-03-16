@@ -1,36 +1,63 @@
-# ──────────────────────────────────────────────────────────────────────────────
-#  ZSH CONFIGURATION - Marty’s minimal slick setup (Birmingham, AL edition)
-# ──────────────────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+#  ~/.zshrc · Marty's Universal Zsh Configuration · Birmingham, AL
+#
+#  Managed by chezmoi — never edit this file directly.
+#  Edit the source:  chezmoi edit ~/.zshrc   (or: dotedit ~/.zshrc)
+#  Push to GitHub:   chezmoi cd && git add . && git commit -m "..." && git push
+#
+#  Works on: macOS (Apple Silicon + Intel) · Ubuntu desktop · Ubuntu WSL ·
+#             AWS EC2 · any SSH server running zsh
+# ══════════════════════════════════════════════════════════════════════════════
 
-# Ensure local bin is in PATH (chezmoi, user scripts, etc.)
+
+# ─────────────────────────────────────────────────── PATH ──────────────────
+# chezmoi installs its binary to ~/.local/bin on Linux/WSL.
+# This must come first so user-local tools shadow system-wide ones.
 export PATH="$HOME/.local/bin:$PATH"
 
-# ============================================================================
-# History – huge, shared, deduplicated, timestamped
-# ============================================================================
+{{ if eq .chezmoi.os "darwin" }}
+# ── macOS: Homebrew ─────────────────────────────────────────────────────────
+# Apple Silicon uses /opt/homebrew; Intel Macs use /usr/local.
+# `brew shellenv` sets PATH, MANPATH, INFOPATH, etc. correctly for each arch.
+if   [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew    ]]; then eval "$(/usr/local/bin/brew shellenv)"
+fi
+{{ end }}
+
+
+# ─────────────────────────────────────────────────── HISTORY ───────────────
+# 1 million lines, shared across all open terminals, deduplicated, timestamped.
+# After a dotfiles sync every machine shares the same configuration — the
+# actual history file (~/.zsh_history) stays local to each machine.
 
 HISTSIZE=1000000
 SAVEHIST=1000000
 HISTFILE=~/.zsh_history
 
-setopt INC_APPEND_HISTORY
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_ALL_DUPS
-setopt HIST_EXPIRE_DUPS_FIRST
-setopt HIST_IGNORE_SPACE
-setopt EXTENDED_HISTORY
-setopt HIST_NO_STORE
+setopt INC_APPEND_HISTORY       # Write entries immediately, not on shell exit
+setopt SHARE_HISTORY            # Reload history from file in every open session
+setopt HIST_IGNORE_ALL_DUPS     # Never record an exact duplicate entry
+setopt HIST_EXPIRE_DUPS_FIRST   # Expire duplicates before unique entries
+setopt HIST_IGNORE_SPACE        # Commands prefixed with a space are not saved
+setopt EXTENDED_HISTORY         # Record timestamp + elapsed time per entry
+setopt HIST_NO_STORE            # Don't store the `history` command itself
 
-# ============================================================================
-# Completion – modern, colorful, menu-driven
-# ============================================================================
+
+# ─────────────────────────────────────────────────── COMPLETION ────────────
+# Smart, colorful, menu-driven tab completion.
+# .zcompdump is rebuilt at most once per 24 hours to keep startup fast.
 
 autoload -Uz compinit
-compinit
+
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+    compinit                    # Stale dump: rebuild (at most once a day)
+else
+    compinit -C                 # Fresh dump: skip security check for speed
+fi
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format '%F{cyan}Completing %d%f'
+zstyle ':completion:*' format '%F{cyan}── completing %d%f'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
@@ -38,109 +65,171 @@ zstyle ':completion:*' verbose true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
-eval "$(dircolors -b)"
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+# Apply LS_COLORS to completions — Linux / GNU coreutils only.
+# dircolors does not exist on macOS without GNU coreutils, so we guard it.
+if command -v dircolors &>/dev/null; then
+    eval "$(dircolors -b)"
+    zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+fi
 
-# ============================================================================
-# Prompt – brighter & more readable on dark terminals (PuTTY/black bg)
-# ============================================================================
+
+# ─────────────────────────────────────────────────── PROMPT ────────────────
+# Bright green user@host · cyan path · red git branch · white $
+#
+# Color codes are ANSI bright variants chosen to be readable on dark
+# backgrounds — PuTTY default black, SSH sessions, tmux, Windows Terminal:
+#   %F{10} = bright green   %F{14} = bright cyan
+#   %F{9}  = bright red     %F{15} = bright white
 
 autoload -Uz vcs_info
 precmd_vcs_info() { vcs_info }
 precmd_functions+=( precmd_vcs_info )
-setopt prompt_subst
-
-# Brighter green username@host, cyan path, red git branch, white $ prompt
-PROMPT='%F{10}%n@%m%f %F{14}%~%f ${vcs_info_msg_0_}%F{15}$ %f'
+setopt PROMPT_SUBST
 
 zstyle ':vcs_info:git:*' formats '%F{9}(%b)%f '
 zstyle ':vcs_info:*' enable git
 
-# ============================================================================
-# General options
-# ============================================================================
+PROMPT='%F{10}%n@%m%f %F{14}%~%f ${vcs_info_msg_0_}%F{15}$ %f'
 
-setopt CORRECT
-setopt GLOB_DOTS
-setopt EXTENDED_GLOB
 
-# Emacs keybindings (better compatibility with PuTTY/remote)
+# ─────────────────────────────────────────────────── OPTIONS ───────────────
+
+setopt CORRECT          # Suggest spelling corrections for mistyped commands
+setopt GLOB_DOTS        # Include hidden (dot) files in glob expansions
+setopt EXTENDED_GLOB    # Extra operators: ^ (negate), ~ (exclude), # (repeat)
+setopt AUTO_CD          # Type a bare directory name to cd into it
+setopt NO_BEEP          # Silence all terminal bell characters
+
+
+# ─────────────────────────────────────────────────── KEY BINDINGS ──────────
+# Emacs-style line editing: best compatibility across PuTTY, MobaXterm,
+# Windows Terminal, native macOS Terminal, and plain SSH sessions.
+# vi mode is great locally but breaks Home/End/arrow keys in many SSH clients.
 bindkey -e
 
-# ============================================================================
-# PuTTY / remote terminal fixes: Home, End, Ctrl+V paste
-# ============================================================================
+# Home / End — terminfo covers most terminals; raw escape sequences are a
+# PuTTY-specific fallback that fires when the terminfo entry is wrong.
+bindkey "${terminfo[khome]}" beginning-of-line
+bindkey "${terminfo[kend]}"  end-of-line
+bindkey '^[[H' beginning-of-line    # PuTTY / xterm fallback
+bindkey '^[[F' end-of-line          # PuTTY / xterm fallback
 
-# Home / End keys (PuTTY often sends wrong sequences)
-bindkey "${terminfo[khome]}" beginning-of-line    # Home
-bindkey "${terminfo[kend]}"  end-of-line          # End
 
-# If terminfo doesn't work (common in PuTTY/SSH), fallback sequences:
-bindkey '^[[H' beginning-of-line   # PuTTY Home
-bindkey '^[[F' end-of-line         # PuTTY End
-
-# Ctrl+V to paste from clipboard (vi-insert style)
-bindkey '^V'   put-clipboard       # Ctrl+V pastes clipboard content
-
-# ============================================================================
-# Aliases – common + OS-aware update
-# ============================================================================
+# ─────────────────────────────────────────────────── ALIASES ───────────────
 
 alias ll='ls -lah'
 alias grep='grep --color=auto'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias cd..='cd ..'   # typo protection
+alias cd..='cd ..'                          # Typo guard
 
-# Top 25 commands stats
+# Top 25 most-used commands — handy for deciding what deserves an alias
 alias history-stats="fc -l 1 | awk '{CMD[\$2]++;count++;} END { for (a in CMD) print CMD[a] \" \" CMD[a]/count*100 \"% \" a; }' | grep -v \"./\" | column -c3 -s \" \" -t | sort -nr | nl | head -n25"
 
-# cd + auto ls
+# cd always shows the directory contents — saves a separate `ls` after every cd
 cd() { builtin cd "$@" && ls; }
 
-# OS-aware update command
+# ── OS-aware ────────────────────────────────────────────────────────────────
+# chezmoi evaluates these template blocks at apply time.  The deployed
+# ~/.zshrc contains only the branch that matches the current machine's OS.
 {{ if eq .chezmoi.os "darwin" }}
 alias update='brew update && brew upgrade'
-alias ls='ls -G'                    # macOS color
+alias ls='ls -G'                            # macOS built-in color ls
 {{ else }}
 alias update='sudo apt update && sudo apt upgrade -y'
-alias ls='ls --color=auto'
+alias ls='ls --color=auto'                  # GNU coreutils color ls
 {{ end }}
 
-# ============================================================================
-# Fuzzy finder (fzf)
-# ============================================================================
+# ── Dotfile management shortcuts ────────────────────────────────────────────
+# These wrap chezmoi commands so you never have to remember the full syntax.
+alias dotedit='chezmoi edit'                # dotedit ~/.zshrc  → opens source in $EDITOR
+alias dotdiff='chezmoi diff'                # Preview what will change before applying
+alias dotapply='chezmoi apply -v'           # Apply source → home (verbose)
+alias dotup='chezmoi update'                # Pull latest from GitHub and apply
+alias dots='chezmoi cd'                     # cd into the chezmoi source directory
 
+
+# ─────────────────────────────────────────────────── FZF ───────────────────
+# Fuzzy finder integration — Ctrl+R (history search), Ctrl+T (file picker).
+# Color palette tuned for dark/black terminal backgrounds.
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --color=fg:250,fg+:15,bg:-1,hl:9,hl+:9,info:14,prompt:10,pointer:12,marker:12,spinner:12,header:8'
+export FZF_DEFAULT_OPTS='
+  --height 40% --layout=reverse --border
+  --color=fg:250,fg+:15,bg:-1,hl:9,hl+:9,info:14,prompt:10,pointer:12,marker:12,spinner:12,header:8'
 
-# ============================================================================
-# Plugins – load last (syntax highlighting especially)
-# ============================================================================
 
-[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ] && \
-    source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+# ─────────────────────────────────────────────────── PLUGINS ───────────────
+#
+# WHY THIS APPROACH — the ~/.zsh/ directory
+# ──────────────────────────────────────────
+# Rather than running a script that clones plugin repos at setup time, both
+# plugins are *vendored* directly inside the chezmoi source repository under
+# dot_zsh/ (which chezmoi maps to ~/.zsh/ on every machine).
+#
+# When you run `chezmoi apply`, the full plugin source trees are copied to
+# ~/.zsh/zsh-autosuggestions/ and ~/.zsh/zsh-syntax-highlighting/.
+# No internet access is required at shell startup — the files are already
+# on disk.  The trade-off is a larger git repo, but the benefit is that
+# plugins work immediately on air-gapped servers, new EC2 instances, and
+# fresh WSL setups with zero extra steps.
+#
+# To update a plugin: cd into its dot_zsh/ subdirectory, git pull, then
+# commit the changes to marty-dotfiles.
+#
+# FALLBACK: If a plugin directory is somehow missing (e.g. a partial apply),
+# _zsh_plugin_load attempts a silent git-clone so the shell still starts
+# without errors.
+#
+# NOTE: zsh-syntax-highlighting MUST always be sourced last.
 
-[ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && \
-    source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+_zsh_plugin_load() {
+    local name="$1" repo="$2" entry="$3"
+    local dir="$HOME/.zsh/$name"
+    if [[ ! -f "$dir/$entry" ]] && command -v git &>/dev/null; then
+        git clone --depth=1 "https://github.com/$repo" "$dir" &>/dev/null
+    fi
+    [[ -f "$dir/$entry" ]] && source "$dir/$entry"
+}
 
-# ============================================================================
-# Auto-update dotfiles in background (quiet, only if changes exist)
-# ============================================================================
+# Fish-shell-style ghost-text suggestions drawn from command history.
+# Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
+_zsh_plugin_load zsh-autosuggestions  zsh-users/zsh-autosuggestions  zsh-autosuggestions.zsh
+
+# Real-time syntax coloring as you type.
+#   green  = recognized command       red    = unknown command
+#   yellow = command arguments        cyan   = built-in / keyword
+# Sourced last so it can wrap all previously-defined widgets.
+_zsh_plugin_load zsh-syntax-highlighting  zsh-users/zsh-syntax-highlighting  zsh-syntax-highlighting.zsh
+
+
+# ─────────────────────────────────────────────────── AUTO-SYNC ─────────────
+#
+# Every new shell session (including SSH logins) quietly checks GitHub for
+# dotfile updates.  If origin/main has new commits, `chezmoi update --force`
+# pulls and re-applies everything — all in a background process so the prompt
+# appears instantly and the session is never blocked.
+#
+# A one-line status message is printed only when an update actually occurs.
+# The block is skipped on machines where chezmoi hasn't been initialized yet
+# (i.e. ~/.local/share/chezmoi/.git doesn't exist).
 
 if [[ -d ~/.local/share/chezmoi/.git ]]; then
     (
-        cd ~/.local/share/chezmoi
-        git fetch --quiet origin main
-        if ! git diff --quiet HEAD origin/main; then
-            echo "→ Updating dotfiles..."
-            git pull --quiet origin main
-            chezmoi apply --refresh --force 2>/dev/null || true
-            echo "→ Dotfiles updated."
+        cd ~/.local/share/chezmoi || exit
+        git fetch --quiet origin main 2>/dev/null
+        if ! git diff --quiet HEAD origin/main 2>/dev/null; then
+            print -P "\n%F{14}  dotfiles:%f update available — applying…"
+            chezmoi update --force 2>/dev/null \
+                && print -P "%F{10}  dotfiles:%f updated ✓" \
+                || print -P "%F{9}  dotfiles:%f update failed · run 'dotup' manually"
         fi
-    ) &>/dev/null &
+    ) &
+    disown
 fi
 
-# ============================================================================
-# End of .zshrc
-# ============================================================================
+
+# ─────────────────────────────────────────────────── GREETING ──────────────
+# Single-line startup message — confirms which zsh version is active.
+# (The long block of $ZSH_REVISION / $ZSH_BUILD_DATE etc. variables that were
+# here before are not standard zsh variables and printed blank lines.)
+print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
