@@ -51,6 +51,31 @@ setopt HIST_IGNORE_SPACE        # Commands prefixed with a space are not saved
 setopt EXTENDED_HISTORY         # Record timestamp + elapsed time per entry
 setopt HIST_NO_STORE            # Don't store the `history` command itself
 
+# ─────────────────────────────────────────────────── HISTORY MASKING ────────
+# Intercepts every command before it hits ~/.zsh_history.
+# Redacts known secret patterns; stores the masked version instead.
+# The command itself still runs — only the history entry is sanitised.
+zshaddhistory() {
+  emulate -L zsh
+  local cmd="${1%%$'\n'}"
+  local masked="$cmd"
+  # Stripe / payment key prefixes
+  masked="${masked//sk_live_[^[:space:]]*/sk_live_***}"
+  masked="${masked//pk_live_[^[:space:]]*/pk_live_***}"
+  # Generic sk- / pk- prefixes (OpenAI, Anthropic, many SaaS tools)
+  masked="${masked//sk-[^[:space:]]*/sk-***}"
+  masked="${masked//pk-[^[:space:]]*/pk-***}"
+  # Bearer tokens and Authorization headers
+  masked="${masked//Bearer [^[:space:]]*/Bearer ***}"
+  masked="${masked//Authorization: Bearer [^[:space:]]*/Authorization: Bearer ***}"
+  # Environment variable assignments ending in KEY / TOKEN / SECRET
+  masked="${masked//[A-Z_]#KEY=[^[:space:]]*/***KEY=***}"
+  masked="${masked//[A-Z_]#TOKEN=[^[:space:]]*/***TOKEN=***}"
+  masked="${masked//[A-Z_]#SECRET=[^[:space:]]*/***SECRET=***}"
+  print -sr -- "$masked"
+  return 1
+}
+
 
 # ─────────────────────────────────────────────────── FPATH PLUGINS ─────────
 # Pure is downloaded by chezmoi externals (.chezmoiexternal.toml) to
@@ -324,4 +349,4 @@ print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
 #   MAJOR — incompatible structural change (new bootstrap dependency, etc.)
 #   MINOR — new feature or significant improvement
 #   PATCH — bug fix, comment correction, cosmetic tweak
-export DOTFILES_VERSION="1.4.2"
+export DOTFILES_VERSION="1.5.0"

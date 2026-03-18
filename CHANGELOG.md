@@ -11,6 +11,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.0] — 2026-03-17
+
+### Added
+- **Local secrets file** — `.zshrc` sources `~/.zshrc.local` at startup if the file exists.
+  API keys and tokens go in that file on each machine; it is never tracked by chezmoi and
+  never reaches GitHub. Each machine can carry different keys or none at all.
+  README documents the pattern and a one-liner for creating the file on a new machine.
+- **History API key masking** — `zshaddhistory` hook intercepts every command before it is
+  written to `~/.zsh_history`. Known secret patterns are redacted and the sanitised version
+  is stored instead; the command itself still executes normally. Patterns covered:
+  `sk_live_*`, `pk_live_*`, `sk-*`, `pk-*` (OpenAI, Anthropic, Stripe, many SaaS tools),
+  `Bearer <token>`, `Authorization: Bearer <token>`, and any environment variable assignment
+  ending in `_KEY`, `_TOKEN`, or `_SECRET`.
+
+---
+
 ## [1.4.2] — 2026-03-16
 
 ### Fixed

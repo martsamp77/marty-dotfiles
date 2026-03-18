@@ -31,7 +31,7 @@ chezmoi uses special prefixes to map source filenames to home-directory paths:
 
 | Source name | Deployed as |
 |---|---|
-| `dot_zshrc` | `~/.zshrc` |
+| `dot_zshrc.tmpl` | `~/.zshrc` |
 | `dot_zsh/` | `~/.zsh/` (entire directory tree) |
 | `dot_zsh/zsh-autosuggestions/` | `~/.zsh/zsh-autosuggestions/` |
 
@@ -84,6 +84,7 @@ When you run `chezmoi apply`, chezmoi clones each repo to the target path (`~/.z
 - Timestamps recorded for every entry (`EXTENDED_HISTORY`)
 - Exact duplicates never stored (`HIST_IGNORE_ALL_DUPS`)
 - Commands prefixed with a space are never saved (`HIST_IGNORE_SPACE`) — useful for passwords
+- **API key masking** — a `zshaddhistory` hook intercepts every command before it is written to disk, redacts known secret patterns (`sk-...`, `sk_live_...`, `Bearer ...`, `*_KEY=...`, `*_TOKEN=...`, `*_SECRET=...`), and stores the sanitised version instead. The command still runs normally; only the history entry is redacted.
 
 ### Completion
 
@@ -106,7 +107,7 @@ marty@myserver ~/projects/foo (main) $
 
 ### Pure Prompt
 
-[Pure](https://github.com/sindresorhus/pure) — 14k stars, minimal, no Nerd Fonts required, works identically over SSH/PuTTY/WSL/macOS. Vendored in `dot_zsh/pure/` alongside the other plugins.
+[Pure](https://github.com/sindresorhus/pure) — 14k stars, minimal, no Nerd Fonts required, works identically over SSH/PuTTY/WSL/macOS. Managed as a chezmoi external — cloned to `~/.zsh/pure/` on `chezmoi apply`, never committed to the repo.
 
 ```
 ~/dev/myproject master*
