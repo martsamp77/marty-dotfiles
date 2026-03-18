@@ -10,6 +10,7 @@
 README.md
 CHANGELOG.md
 install.sh
+install-starship.ps1
 
 # Cursor settings source files — deployed by run_after_apply-cursor.sh,
 # not directly to $HOME.  The run_after script copies these to the
