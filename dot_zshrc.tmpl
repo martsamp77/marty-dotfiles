@@ -57,14 +57,16 @@ setopt HIST_NO_STORE            # Don't store the `history` command itself
 # The command itself still runs — only the history entry is sanitised.
 zshaddhistory() {
   emulate -L zsh
+  setopt EXTENDED_GLOB          # required for [A-Z_]# (zero-or-more) to work
   local cmd="${1%%$'\n'}"
   local masked="$cmd"
   # Stripe / payment key prefixes
   masked="${masked//sk_live_[^[:space:]]*/sk_live_***}"
   masked="${masked//pk_live_[^[:space:]]*/pk_live_***}"
-  # Generic sk- / pk- prefixes (OpenAI, Anthropic, many SaaS tools)
+  # Generic key prefixes (OpenAI sk-, Anthropic sk-, Super Memory sm-, Stripe pk-)
   masked="${masked//sk-[^[:space:]]*/sk-***}"
   masked="${masked//pk-[^[:space:]]*/pk-***}"
+  masked="${masked//sm-[^[:space:]]*/sm-***}"
   # Bearer tokens and Authorization headers
   masked="${masked//Bearer [^[:space:]]*/Bearer ***}"
   masked="${masked//Authorization: Bearer [^[:space:]]*/Authorization: Bearer ***}"
