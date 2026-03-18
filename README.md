@@ -402,15 +402,80 @@ Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmp
 | macOS | `~/Library/Application Support/Cursor/User/` |
 | Linux | `~/.config/Cursor/User/` |
 
-### Populating the extension manifest
+### Cursor Extensions
 
-Run this from a machine that has your extensions installed:
+#### Where extensions are stored
 
-```bash
-cursor --list-extensions > cursor/extensions.txt
+Cursor installs extensions to an OS-specific directory. Cursor tracks what's installed in an `extensions.json` file inside that directory (do not edit it).
+
+| OS | Extensions directory |
+|---|---|
+| **Windows** | `%USERPROFILE%\.cursor\extensions\` (e.g. `C:\Users\You\.cursor\extensions\`) |
+| **macOS** | `~/Library/Application Support/Cursor/extensions/` |
+| **Linux** | `~/.cursor/extensions/` |
+| **WSL** (Cursor on Windows) | `%USERPROFILE%\.cursor\extensions\` (Windows path; Cursor runs on the Windows side) |
+
+Each extension lives in its own folder: `{publisher}.{name}-{version}-{platform}` (e.g. `eamodio.gitlens-17.11.1-universal`).
+
+#### What `cursor/extensions.txt` is
+
+`cursor/extensions.txt` is a **manifest file** you maintain in this repo. Cursor does not read it automatically. It is used to:
+
+1. Document which extensions you want installed
+2. Install them on new machines or after a reset (via `chezmoi apply` or manual commands)
+
+Lines starting with `#` are comments and are ignored when installing.
+
+#### Updating the manifest manually
+
+1. Open `cursor/extensions.txt` in an editor.
+2. Add or remove extension IDs, one per line (e.g. `esbenp.prettier-vscode`).
+3. To see what's currently installed on your machine:
+   ```powershell
+   # Windows PowerShell
+   cursor --list-extensions
+   ```
+   ```bash
+   # macOS / Linux / WSL
+   cursor --list-extensions
+   # On WSL, use cursor.exe if cursor is not in PATH
+   cursor.exe --list-extensions
+   ```
+4. To overwrite the manifest with your current install (backs up any custom comments/structure):
+   ```powershell
+   # Windows PowerShell (from repo root)
+   cursor --list-extensions > cursor\extensions.txt
+   ```
+   ```bash
+   # macOS / Linux / WSL (from repo root)
+   cursor --list-extensions > cursor/extensions.txt
+   # On WSL: cursor.exe --list-extensions > cursor/extensions.txt
+   ```
+
+#### Installing extensions from the manifest
+
+**Option A: Let chezmoi do it** — Run `chezmoi apply` (or `dotapply`). The `run_after_apply-cursor.sh.tmpl` script installs any extensions from `cursor/extensions.txt` that are not already installed.
+
+**Option B: Manual install** — Use these commands when you want to sync extensions without running a full chezmoi apply.
+
+**Windows PowerShell** (from repo root):
+
+```powershell
+cd c:\Workspace\marty-dotfiles
+Get-Content cursor\extensions.txt | Where-Object { $_ -notmatch '^#' -and $_ -match '\S' } | ForEach-Object { cursor --install-extension $_ }
 ```
 
-On WSL, use `cursor.exe` instead. The deployment script reads this file and installs any missing extensions on other machines.
+**macOS / Linux / WSL** (from repo root):
+
+```bash
+cd ~/path/to/marty-dotfiles
+grep -v '^#' cursor/extensions.txt | grep -v '^[[:space:]]*$' | while read -r ext; do
+  cursor --install-extension "$ext"
+done
+# On WSL, use cursor.exe instead of cursor if needed
+```
+
+Extensions that are already installed are left unchanged; only missing ones are installed.
 
 ### User Rules (manual sync)
 

@@ -11,6 +11,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.1] — 2026-03-18
+
+### Added
+- **Cursor Extensions documentation** — README now includes: where extensions are stored (by OS), what `cursor/extensions.txt` is, how to update the manifest manually, and how to install extensions from the manifest (via chezmoi apply or manual PowerShell/bash commands).
+- **extensions.txt header** — Updated with correct install commands for both PowerShell and bash, and a pointer to README for full documentation.
+
+### Changed
+- **README** — Replaced brief "Populating the extension manifest" section with comprehensive "Cursor Extensions" documentation.
+
+---
+
 ## [1.5.0] — 2026-03-17
 
 ### Added
