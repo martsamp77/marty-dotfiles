@@ -105,7 +105,7 @@ fi
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
-zstyle ':completion:*' format '%F{cyan}── completing %d%f'
+zstyle ':completion:*' format '%F{117}── completing %d%f'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
@@ -115,8 +115,12 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
 # Apply LS_COLORS to completions — Linux / GNU coreutils only.
 # dircolors does not exist on macOS without GNU coreutils, so we guard it.
+# Override directory color (di) to 117 for readability on black backgrounds.
 if command -v dircolors &>/dev/null; then
     eval "$(dircolors -b)"
+    LS_COLORS="${LS_COLORS/di=01;34/di=38;5;117}"
+    LS_COLORS="${LS_COLORS/di=34:/di=38;5;117:}"
+    export LS_COLORS
     zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 fi
 
@@ -134,8 +138,9 @@ autoload -U promptinit; promptinit
 prompt pure
 
 # Color overrides — tuned for dark backgrounds (PuTTY, SSH, Windows Terminal)
-zstyle :prompt:pure:path           color 81         # light cyan (#5fd7ff)
-zstyle :prompt:pure:git:branch     color 75        # light blue (#5fafff)
+# 117 = pale blue (#87d7ff), highly readable on black
+zstyle :prompt:pure:path           color 117
+zstyle :prompt:pure:git:branch     color 117
 zstyle :prompt:pure:git:dirty      color yellow
 zstyle :prompt:pure:prompt:success color magenta
 zstyle :prompt:pure:prompt:error   color red
@@ -267,29 +272,30 @@ export FZF_DEFAULT_OPTS='
 
 # ── Syntax highlight color scheme ───────────────────────────────────────────
 # Must be declared before zsh-syntax-highlighting is sourced.
-# Colors tuned for dark terminal backgrounds (PuTTY, WSL, SSH, macOS dark mode).
+# 117 = pale blue, readable on black; 256-color palette.
 typeset -A ZSH_HIGHLIGHT_STYLES
 ZSH_HIGHLIGHT_STYLES[command]='fg=green,bold'           # valid command — bright green
 ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=red,bold'       # typo / not found — red bold
-ZSH_HIGHLIGHT_STYLES[alias]='fg=cyan,bold'              # alias name
-ZSH_HIGHLIGHT_STYLES[builtin]='fg=cyan'                 # shell builtin (cd, echo…)
-ZSH_HIGHLIGHT_STYLES[function]='fg=cyan'                # function name
+ZSH_HIGHLIGHT_STYLES[alias]='fg=117,bold'               # alias name
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=117'                   # shell builtin (cd, echo…)
+ZSH_HIGHLIGHT_STYLES[function]='fg=117'                 # function name
 ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=yellow,bold'    # if, for, while…
-ZSH_HIGHLIGHT_STYLES[precommand]='fg=yellow'            # sudo, env, noglob…
+ZSH_HIGHLIGHT_STYLES[precommand]='fg=yellow'             # sudo, env, noglob…
 ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg=magenta' # -v, -r…
 ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=magenta' # --force, --verbose…
 ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=yellow'
 ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=yellow'
 ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=yellow'
-ZSH_HIGHLIGHT_STYLES[path]='fg=white,underline'         # existing file/dir path
+ZSH_HIGHLIGHT_STYLES[path]='fg=117,underline'           # existing file/dir path
 ZSH_HIGHLIGHT_STYLES[redirection]='fg=magenta,bold'     # >, >>, |, <
 ZSH_HIGHLIGHT_STYLES[comment]='fg=8'                    # # comments — dark grey
 ZSH_HIGHLIGHT_STYLES[assign]='fg=white'                 # VAR=value
+ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=117'        # !350, !! etc.
 
 # Fish-shell-style ghost-text suggestions drawn from command history.
 # Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
-# Less aggressive: only suggest when current line matches previous command.
-ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd)
+# Completion-first: suggests from current context (e.g. files in cwd) before history.
+ZSH_AUTOSUGGEST_STRATEGY=(completion history)
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 [[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
     source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
