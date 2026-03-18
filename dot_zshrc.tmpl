@@ -134,7 +134,7 @@ autoload -U promptinit; promptinit
 prompt pure
 
 # Color overrides — tuned for dark backgrounds (PuTTY, SSH, Windows Terminal)
-zstyle :prompt:pure:path           color cyan
+zstyle :prompt:pure:path           color 81         # light cyan (#5fd7ff)
 zstyle :prompt:pure:git:branch     color 75        # light blue (#5fafff)
 zstyle :prompt:pure:git:dirty      color yellow
 zstyle :prompt:pure:prompt:success color magenta
@@ -288,6 +288,9 @@ ZSH_HIGHLIGHT_STYLES[assign]='fg=white'                 # VAR=value
 
 # Fish-shell-style ghost-text suggestions drawn from command history.
 # Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
+# Less aggressive: only suggest when current line matches previous command.
+ZSH_AUTOSUGGEST_STRATEGY=(match_prev_cmd)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 [[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
     source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
