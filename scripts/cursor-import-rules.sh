@@ -11,7 +11,7 @@
 #  Usage:
 #    ./scripts/cursor-import-rules.sh
 #
-#  Requires: sqlite3
+#  Requires: sqlite3, xxd (vim-common on Ubuntu)
 # ══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -46,6 +46,11 @@ if ! command -v sqlite3 &>/dev/null; then
     exit 1
 fi
 
+if ! command -v xxd &>/dev/null; then
+    echo "xxd is required but not installed. On Ubuntu: sudo apt install xxd" >&2
+    exit 1
+fi
+
 # ── Locate the rules file ──────────────────────────────────────────────────
 if command -v chezmoi &>/dev/null; then
     SOURCE_DIR="$(chezmoi source-path 2>/dev/null || echo "")"
@@ -73,10 +78,9 @@ cp "$DB_PATH" "$BACKUP"
 echo "Database backed up to: $BACKUP"
 
 # ── Write rules into the database ──────────────────────────────────────────
-sqlite3 "$DB_PATH" <<SQL
-INSERT OR REPLACE INTO ItemTable (key, value)
-VALUES ('aicontext.personalContext', '$(echo "$RULES" | sed "s/'/''/g")');
-SQL
+# Use hex encoding so multiline content and special chars are handled safely.
+RULES_HEX=$(printf '%s' "$RULES" | xxd -p | tr -d '\n')
+sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO ItemTable (key, value) VALUES ('aicontext.personalContext', X'$RULES_HEX');"
 
 echo "User Rules imported successfully."
 echo "Restart Cursor to see the changes."

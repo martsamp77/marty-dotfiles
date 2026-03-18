@@ -8,9 +8,6 @@
     "explorer.confirmDelete": false,
     "editor.accessibilitySupport": "off",
     "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "workbench.editorAssociations": {
-        "*.md": "vscode.markdown.preview.editor"
-    },
     "window.title": "${rootName}",
     "window.restoreWindows": "none",
     "window.restoreFullscreen": true,

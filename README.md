@@ -34,8 +34,8 @@ chezmoi uses special prefixes to map source filenames to home-directory paths:
 | Source name | Deployed as |
 |---|---|
 | `dot_zshrc.tmpl` | `~/.zshrc` |
-| `dot_zsh/` | `~/.zsh/` (entire directory tree) |
-| `dot_zsh/zsh-autosuggestions/` | `~/.zsh/zsh-autosuggestions/` |
+
+The `~/.zsh/` plugin directories (pure, zsh-autosuggestions, zsh-syntax-highlighting) are managed by externals — see below. They are not source files in the repo.
 
 ### Plugin management — `.chezmoiexternal.toml`
 
@@ -126,7 +126,7 @@ Color overrides for dark backgrounds are applied via `zstyle`:
 | Element | Color |
 |---|---|
 | Path | Cyan |
-| Git branch | Bright blue (#0087ff) |
+| Git branch | Bright cyan (#00ffff) |
 | Dirty indicator | Yellow |
 | Prompt success | Magenta |
 | Prompt error | Red |
@@ -392,7 +392,7 @@ Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmp
 | `cursor/extensions.txt` | Extension manifest — installed on missing machines |
 | `cursor/snippets/*.code-snippets` | Custom snippets (if any) |
 | `cursor/mcp.json` | Global MCP server config (if present) |
-| `cursor/user-rules.md` | Exported Cursor User Rules (manual sync) |
+| `cursor/user-rules.md` | In repo for version control; use import/export scripts to sync with state.vscdb (not auto-deployed) |
 
 ### Settings paths by OS
 
@@ -424,7 +424,9 @@ Cursor stores User Rules in a SQLite database (`state.vscdb`), not a plain text 
 ./scripts/cursor-import-rules.sh
 ```
 
-The import script backs up `state.vscdb` before writing. User Rules are not deployed automatically by `chezmoi apply` because modifying the SQLite database while Cursor is running can corrupt it.
+Run from the chezmoi source dir (e.g. `dots` then `./scripts/cursor-export-rules.sh`) or ensure `chezmoi` is in PATH so the scripts can resolve the source path.
+
+The import script backs up `state.vscdb` before writing. User Rules are not deployed automatically by `chezmoi apply` because modifying the SQLite database while Cursor is running can corrupt it. Requires `sqlite3` and `xxd` (Ubuntu: `sudo apt install sqlite3 xxd`).
 
 ### Adding a new Cursor setting
 
