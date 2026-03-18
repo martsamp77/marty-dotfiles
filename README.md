@@ -1,6 +1,8 @@
 # Marty's Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) — one config file, every machine, always in sync.
+Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) — one config repo, every machine, always in sync.
+
+Manages: **zsh** (shell, prompt, plugins, history) and **Cursor IDE** (settings, keybindings, extensions, snippets, MCP config).
 
 Supports:
 
@@ -374,6 +376,61 @@ dotapply
 # Push to GitHub so all other machines get it on next shell open
 dots && git add . && git commit -m "Add .gitconfig" && git push
 ```
+
+---
+
+## Cursor IDE Settings
+
+Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It detects the OS and deploys files to the correct path.
+
+### What's synced
+
+| File | Description |
+|---|---|
+| `cursor/settings.json` | Editor preferences, theme, Peacock colors |
+| `keybindings.json` | Generated inline with OS-aware workspace path |
+| `cursor/extensions.txt` | Extension manifest — installed on missing machines |
+| `cursor/snippets/*.code-snippets` | Custom snippets (if any) |
+| `cursor/mcp.json` | Global MCP server config (if present) |
+| `cursor/user-rules.md` | Exported Cursor User Rules (manual sync) |
+
+### Settings paths by OS
+
+| OS | Cursor settings path |
+|---|---|
+| Windows (via WSL) | `%APPDATA%\Cursor\User\` |
+| macOS | `~/Library/Application Support/Cursor/User/` |
+| Linux | `~/.config/Cursor/User/` |
+
+### Populating the extension manifest
+
+Run this from a machine that has your extensions installed:
+
+```bash
+cursor --list-extensions > cursor/extensions.txt
+```
+
+On WSL, use `cursor.exe` instead. The deployment script reads this file and installs any missing extensions on other machines.
+
+### User Rules (manual sync)
+
+Cursor stores User Rules in a SQLite database (`state.vscdb`), not a plain text file. Two helper scripts handle export and import:
+
+```bash
+# Export rules from the current machine to cursor/user-rules.md
+./scripts/cursor-export-rules.sh
+
+# Import rules on a new machine (close Cursor first!)
+./scripts/cursor-import-rules.sh
+```
+
+The import script backs up `state.vscdb` before writing. User Rules are not deployed automatically by `chezmoi apply` because modifying the SQLite database while Cursor is running can corrupt it.
+
+### Adding a new Cursor setting
+
+1. Edit `cursor/settings.json` in the repo (or change it in Cursor and copy it back)
+2. For keybindings, edit the heredoc in `run_after_apply-cursor.sh.tmpl`
+3. Push to GitHub — other machines pick it up on next `chezmoi update`
 
 ---
 

@@ -1,0 +1,119 @@
+#!/bin/bash
+# ══════════════════════════════════════════════════════════════════════════════
+#  run_after_apply-cursor.sh.tmpl
+#
+#  Deploys Cursor IDE settings to the correct OS-specific path after
+#  chezmoi apply.  Handles macOS, native Linux, and WSL (where Cursor
+#  runs on the Windows side but chezmoi runs inside WSL).
+#
+#  Managed files:
+#    cursor/settings.json    → editor preferences, theme, Peacock colors
+#    keybindings.json        → generated inline (OS-aware workspace path)
+#    cursor/extensions.txt   → extension manifest (install via --install-extension)
+#
+#  Files NOT managed (binary / machine-local):
+#    state.vscdb             → SQLite blob (User Rules, chat history, UI state)
+#    ~/.cursor/extensions/   → installed extension packages
+#
+#  Usage:
+#    Runs automatically on `chezmoi apply` / `chezmoi update`.
+#    Manual:  chezmoi apply --include=always
+# ══════════════════════════════════════════════════════════════════════════════
+
+set -euo pipefail
+
+CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
+
+# ── Detect OS and set Cursor settings path ──────────────────────────────────
+{{ if eq .chezmoi.os "darwin" }}
+CURSOR_DIR="$HOME/Library/Application Support/Cursor/User"
+CURSOR_CMD="cursor"
+WORKSPACE_PATH="$HOME/Workspace"
+{{ else }}
+# Linux — check for WSL (Cursor runs on the Windows side)
+if [[ -f /proc/version ]] && grep -qi microsoft /proc/version 2>/dev/null; then
+    # WSL: resolve the Windows AppData path
+    WIN_APPDATA=$(wslpath "$(cmd.exe /c "echo %APPDATA%" 2>/dev/null | tr -d '\r')")
+    CURSOR_DIR="${WIN_APPDATA}/Cursor/User"
+    # cursor CLI on WSL needs the .exe suffix
+    CURSOR_CMD="cursor.exe"
+    WORKSPACE_PATH="C:\\\\Workspace"
+else
+    # Native Linux
+    CURSOR_DIR="$HOME/.config/Cursor/User"
+    CURSOR_CMD="cursor"
+    WORKSPACE_PATH="$HOME/Workspace"
+fi
+{{ end }}
+
+# ── Verify Cursor is installed ──────────────────────────────────────────────
+if [[ ! -d "$CURSOR_DIR" ]]; then
+    echo "  cursor: settings directory not found — skipping ($CURSOR_DIR)"
+    exit 0
+fi
+
+# ── Deploy settings.json ────────────────────────────────────────────────────
+SETTINGS_SRC="${CHEZMOI_SOURCE}/cursor/settings.json"
+if [[ -f "$SETTINGS_SRC" ]]; then
+    cp "$SETTINGS_SRC" "$CURSOR_DIR/settings.json"
+    echo "  cursor: settings.json deployed"
+else
+    echo "  cursor: settings.json not found in source — skipping"
+fi
+
+# ── Deploy keybindings.json (generated with OS-aware paths) ─────────────────
+cat > "$CURSOR_DIR/keybindings.json" << KEYBINDINGS_EOF
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "ctrl+i",
+        "command": "composerMode.agent"
+    },
+    {
+        "key": "ctrl+alt+s",
+        "command": "workbench.action.toggleUnifiedSidebarFromKeyboard",
+        "when": "cursor.agentIdeUnification.enabled == true && !isAuxiliaryWindowFocusedContext"
+    },
+    {
+        "key": "ctrl+o ctrl+m",
+        "command": "workbench.action.files.openFolder",
+        "args": { "defaultUri": "$WORKSPACE_PATH" }
+    }
+]
+KEYBINDINGS_EOF
+echo "  cursor: keybindings.json deployed"
+
+# ── Deploy snippets (if any exist in source) ────────────────────────────────
+SNIPPETS_SRC="${CHEZMOI_SOURCE}/cursor/snippets"
+if [[ -d "$SNIPPETS_SRC" ]] && ls "$SNIPPETS_SRC"/*.code-snippets &>/dev/null; then
+    mkdir -p "$CURSOR_DIR/snippets"
+    cp "$SNIPPETS_SRC"/*.code-snippets "$CURSOR_DIR/snippets/"
+    echo "  cursor: snippets deployed"
+fi
+
+# ── Sync extensions from manifest ───────────────────────────────────────────
+EXTENSIONS_SRC="${CHEZMOI_SOURCE}/cursor/extensions.txt"
+if [[ -f "$EXTENSIONS_SRC" ]] && command -v "$CURSOR_CMD" &>/dev/null; then
+    # Get currently installed extensions
+    INSTALLED=$("$CURSOR_CMD" --list-extensions 2>/dev/null || true)
+
+    # Install missing extensions
+    while IFS= read -r ext; do
+        [[ -z "$ext" || "$ext" =~ ^# ]] && continue
+        if ! echo "$INSTALLED" | grep -qi "^${ext}$"; then
+            echo "  cursor: installing extension $ext"
+            "$CURSOR_CMD" --install-extension "$ext" 2>/dev/null || true
+        fi
+    done < "$EXTENSIONS_SRC"
+    echo "  cursor: extensions synced"
+elif [[ -f "$EXTENSIONS_SRC" ]]; then
+    echo "  cursor: $CURSOR_CMD not in PATH — skipping extension sync"
+fi
+
+# ── Deploy global MCP config (if present) ───────────────────────────────────
+MCP_SRC="${CHEZMOI_SOURCE}/cursor/mcp.json"
+if [[ -f "$MCP_SRC" ]]; then
+    mkdir -p "$HOME/.cursor"
+    cp "$MCP_SRC" "$HOME/.cursor/mcp.json"
+    echo "  cursor: global mcp.json deployed"
+fi
