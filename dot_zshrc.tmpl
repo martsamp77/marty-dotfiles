@@ -34,6 +34,11 @@ export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 {{ end }}
 
 
+# ─────────────────────────────────────────────────── EDITOR ────────────────
+export EDITOR=nano
+export VISUAL=nano
+
+
 # ─────────────────────────────────────────────────── HISTORY ───────────────
 # 1 million lines, shared across all open terminals, deduplicated, timestamped.
 # After a dotfiles sync every machine shares the same configuration — the
