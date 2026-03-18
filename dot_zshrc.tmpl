@@ -302,6 +302,15 @@ fi
 {{ end }}
 
 
+# ─────────────────────────────────────────────────── LOCAL SECRETS ─────────
+# Machine-local secrets (API keys, tokens) — never committed to git.
+# Create ~/.zshrc.local on each machine and export keys there, e.g.:
+#   export MEM0_API_KEY="sk-..."
+#   export OPENAI_API_KEY="sk-..."
+# chezmoi never tracks this file, so it never reaches GitHub.
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+
 # ─────────────────────────────────────────────────── GREETING ──────────────
 # Single-line startup message — confirms which zsh version is active.
 # (The long block of $ZSH_REVISION / $ZSH_BUILD_DATE etc. variables that were

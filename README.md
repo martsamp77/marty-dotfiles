@@ -376,6 +376,29 @@ dots && git add . && git commit -m "Add .gitconfig" && git push
 
 ---
 
+## API Keys and Local Secrets
+
+API keys and other secrets are stored in `~/.zshrc.local` on each machine — a file that is **never tracked by chezmoi and never pushed to GitHub**.
+
+`.zshrc` sources it automatically if it exists:
+
+```bash
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+```
+
+On any new machine, create the file manually after running `chezmoi apply`:
+
+```bash
+cat >> ~/.zshrc.local << 'EOF'
+export MEM0_API_KEY="sk-..."
+export OPENAI_API_KEY="sk-..."
+EOF
+```
+
+Each machine can have different keys or none at all — on machines without the file the shell starts cleanly with no errors. Never run `chezmoi add ~/.zshrc.local`; keep it local only.
+
+---
+
 ## Templates
 
 chezmoi evaluates Go template syntax inside any source file. Use this for per-machine or per-OS differences:
