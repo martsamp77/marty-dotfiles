@@ -244,7 +244,8 @@ alias ls='ls --color=auto'                  # GNU coreutils color ls
 alias dotedit='chezmoi edit'                # dotedit ~/.zshrc  → opens source in $EDITOR
 alias dotdiff='chezmoi diff'                # Preview what will change before applying
 alias dotapply='chezmoi apply -v'           # Apply source → home (verbose)
-alias dotup='chezmoi update'                # Pull latest from GitHub and apply
+alias dotup='chezmoi update'                # Pull latest from GitHub and apply (fast, no tool upgrades)
+alias dottools='bash "$(chezmoi source-path 2>/dev/null)/scripts/dottools.sh"'  # Upgrade Cursor, VS Code, git, chezmoi, zsh, fzf
 alias dots='chezmoi cd'                     # cd into the chezmoi source directory
 
 

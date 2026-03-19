@@ -353,6 +353,7 @@ C:\PuTTYLogs\&H_&Y&M&D.log
 | Preview pending changes | `dotdiff` |
 | Apply locally | `dotapply` |
 | Pull from GitHub + apply | `dotup` |
+| Upgrade tools (Cursor, VS Code, git, chezmoi, zsh, fzf) | `dottools` |
 | cd to source directory | `dots` |
 | Commit and push a change | `dots && git add . && git commit -m "..." && git push` |
 
@@ -497,9 +498,9 @@ For VS Code (same manifest, `anysphere.*` excluded):
 ./scripts/vscode-sync-extensions.sh
 ```
 
-### Tool upgrades on dotup
+### Tool upgrades (dottools)
 
-Every `dotup` runs `run_after_apply-upgrade-tools.sh.tmpl`, which upgrades Cursor, VS Code, git, chezmoi, zsh, and fzf when installed (per-platform: Homebrew on macOS, apt on Linux/WSL, winget for Windows IDEs on WSL). Set `DOTUP_SKIP_UPGRADES=1` to skip.
+Run `dottools` to upgrade Cursor, VS Code, git, chezmoi, zsh, and fzf when installed. Per-platform: Homebrew on macOS, apt on Linux/WSL, winget for Windows IDEs on WSL. Kept separate from `dotup` so dotup stays fast.
 
 ### User Rules (manual sync)
 

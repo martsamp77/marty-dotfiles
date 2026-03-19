@@ -1,19 +1,13 @@
 #!/bin/bash
 # ══════════════════════════════════════════════════════════════════════════════
-#  run_after_apply-upgrade-tools.sh.tmpl
+#  dottools — upgrade Cursor, VS Code, git, chezmoi, zsh, fzf
 #
-#  Upgrades Cursor, VS Code, git, chezmoi, zsh, and fzf when dotup runs.
-#  Skips each tool if not installed. Set DOTUP_SKIP_UPGRADES=1 to skip entirely.
-#
-#  Runs automatically on chezmoi apply / chezmoi update.
+#  Run manually: dottools
+#  Skips each tool if not installed. Per-platform: Homebrew (macOS), apt
+#  (Linux/WSL), winget (WSL for Windows IDEs).
 # ══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
-
-if [[ "${DOTUP_SKIP_UPGRADES:-0}" == "1" ]]; then
-    echo "  upgrade-tools: skipped (DOTUP_SKIP_UPGRADES=1)"
-    exit 0
-fi
 
 OS="$(uname -s)"
 IS_WSL=false
@@ -22,7 +16,7 @@ IS_WSL=false
 # ── macOS (Homebrew) ────────────────────────────────────────────────────────
 if [[ "$OS" == "Darwin" ]]; then
     if command -v brew &>/dev/null; then
-        echo "  upgrade-tools: running brew upgrade..."
+        echo "dottools: running brew upgrade..."
         TO_UPGRADE=""
         brew list --formula git &>/dev/null && TO_UPGRADE="$TO_UPGRADE git"
         brew list --formula chezmoi &>/dev/null && TO_UPGRADE="$TO_UPGRADE chezmoi"
@@ -31,26 +25,26 @@ if [[ "$OS" == "Darwin" ]]; then
         [[ -n "$TO_UPGRADE" ]] && brew upgrade $TO_UPGRADE 2>/dev/null || true
         brew list --cask cursor &>/dev/null && brew upgrade --cask cursor --greedy 2>/dev/null || true
         brew list --cask visual-studio-code &>/dev/null && brew upgrade --cask visual-studio-code --greedy 2>/dev/null || true
-        echo "  upgrade-tools: done"
+        echo "dottools: done"
     fi
     exit 0
 fi
 
 # ── Linux (apt) ──────────────────────────────────────────────────────────────
 if [[ "$OS" == "Linux" ]] && ! $IS_WSL; then
-    echo "  upgrade-tools: running apt upgrade..."
+    echo "dottools: running apt upgrade..."
     sudo apt-get update -qq 2>/dev/null || true
     sudo apt-get install -y --only-upgrade git zsh 2>/dev/null || true
     dpkg -l code &>/dev/null && sudo apt-get install -y --only-upgrade code 2>/dev/null || true
     command -v chezmoi &>/dev/null && chezmoi upgrade 2>/dev/null || true
     dpkg -l fzf &>/dev/null && sudo apt-get install -y --only-upgrade fzf 2>/dev/null || true
-    echo "  upgrade-tools: done"
+    echo "dottools: done"
     exit 0
 fi
 
 # ── WSL (apt + winget for Windows apps) ──────────────────────────────────────
 if [[ "$OS" == "Linux" ]] && $IS_WSL; then
-    echo "  upgrade-tools: running apt + winget..."
+    echo "dottools: running apt + winget..."
     sudo apt-get update -qq 2>/dev/null || true
     sudo apt-get install -y --only-upgrade git zsh 2>/dev/null || true
     dpkg -l code &>/dev/null && sudo apt-get install -y --only-upgrade code 2>/dev/null || true
@@ -60,5 +54,5 @@ if [[ "$OS" == "Linux" ]] && $IS_WSL; then
         cmd.exe /c "winget upgrade --id Anysphere.Cursor --silent --accept-package-agreements --accept-source-agreements" 2>/dev/null || true
         cmd.exe /c "winget upgrade --id Microsoft.VisualStudioCode --silent --accept-package-agreements --accept-source-agreements" 2>/dev/null || true
     fi
-    echo "  upgrade-tools: done"
+    echo "dottools: done"
 fi
