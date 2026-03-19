@@ -379,9 +379,9 @@ dots && git add . && git commit -m "Add .gitconfig" && git push
 
 ---
 
-## Cursor IDE Settings
+## Cursor and VS Code IDE Settings
 
-Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It detects the OS and deploys files to the correct path.
+Cursor and VS Code settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It detects the OS and deploys to each IDE if its settings directory exists. Both IDEs share the same config (settings, keybindings, snippets, extensions); for VS Code, `anysphere.*` extensions are skipped (Cursor-only).
 
 ### What's synced
 
@@ -397,11 +397,10 @@ Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmp
 
 ### Settings paths by OS
 
-| OS | Cursor settings path |
-|---|---|
-| Windows (via WSL) | `%APPDATA%\Cursor\User\` |
-| macOS | `~/Library/Application Support/Cursor/User/` |
-| Linux | `~/.config/Cursor/User/` |
+| IDE | Windows (via WSL) | macOS | Linux |
+|-----|-------------------|-------|-------|
+| Cursor | `%APPDATA%\Cursor\User\` | `~/Library/Application Support/Cursor/User/` | `~/.config/Cursor/User/` |
+| VS Code | `%APPDATA%\Code\User\` | `~/Library/Application Support/Code/User/` | `~/.config/Code/User/` |
 
 ### Cursor Extensions
 
@@ -455,7 +454,7 @@ Lines starting with `#` are comments and are ignored when installing. For a desc
 
 #### Installing extensions from the manifest
 
-**Option A: Let chezmoi do it** — Run `chezmoi apply` (or `dotapply`). The `run_after_apply-cursor.sh.tmpl` script installs any extensions from `cursor/extensions.txt` that are not already installed.
+**Option A: Let chezmoi do it** — Run `chezmoi apply` (or `dotapply`). The run script installs extensions from `cursor/extensions.txt` into Cursor and VS Code (skipping `anysphere.*` for VS Code).
 
 **Option B: Manual install** — Use these commands when you want to sync extensions without running a full chezmoi apply.
 
@@ -477,6 +476,30 @@ done
 ```
 
 Extensions that are already installed are left unchanged; only missing ones are installed.
+
+#### Syncing extensions interactively
+
+To compare installed extensions with the manifest and decide what to remove or add:
+
+```bash
+./scripts/cursor-sync-extensions.sh
+```
+
+The script shows:
+- **Orphans** — installed but not in the manifest. For each: choose Remove (uninstall), Add to list (append to `extensions.txt`), or Skip.
+- **Missing** — in the manifest but not installed. Choose whether to install them.
+
+Run from the repo root or anywhere; it uses `chezmoi source-path` or the script location to find the manifest.
+
+For VS Code (same manifest, `anysphere.*` excluded):
+
+```bash
+./scripts/vscode-sync-extensions.sh
+```
+
+### Tool upgrades on dotup
+
+Every `dotup` runs `run_after_apply-upgrade-tools.sh.tmpl`, which upgrades Cursor, VS Code, git, chezmoi, zsh, and fzf when installed (per-platform: Homebrew on macOS, apt on Linux/WSL, winget for Windows IDEs on WSL). Set `DOTUP_SKIP_UPGRADES=1` to skip.
 
 ### User Rules (manual sync)
 

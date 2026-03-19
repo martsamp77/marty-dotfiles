@@ -2,9 +2,9 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  run_after_apply-cursor.sh.tmpl
 #
-#  Deploys Cursor IDE settings to the correct OS-specific path after
-#  chezmoi apply.  Handles macOS, native Linux, and WSL (where Cursor
-#  runs on the Windows side but chezmoi runs inside WSL).
+#  Deploys Cursor and VS Code IDE settings to the correct OS-specific path
+#  after chezmoi apply.  Handles macOS, native Linux, and WSL (where Cursor
+#  and VS Code run on the Windows side but chezmoi runs inside WSL).
 #
 #  Managed files:
 #    cursor/settings.json    → editor preferences, theme, Peacock colors
@@ -24,10 +24,12 @@ set -euo pipefail
 
 CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
 
-# ── Detect OS and set Cursor settings path ──────────────────────────────────
+# ── Detect OS and set IDE settings paths ────────────────────────────────────
 {{ if eq .chezmoi.os "darwin" }}
 CURSOR_DIR="$HOME/Library/Application Support/Cursor/User"
 CURSOR_CMD="cursor"
+CODE_DIR="$HOME/Library/Application Support/Code/User"
+CODE_CMD="code"
 WORKSPACE_PATH="$HOME/Workspace"
 {{ else }}
 # Linux — check for WSL (Cursor runs on the Windows side)
@@ -41,21 +43,25 @@ if [[ -f /proc/version ]] && grep -qi microsoft /proc/version 2>/dev/null; then
         CURSOR_FALLBACK="/mnt/c/Program Files/cursor/resources/app/bin/cursor"
         [[ -x "$CURSOR_FALLBACK" ]] && CURSOR_CMD="$CURSOR_FALLBACK"
     fi
+    CODE_DIR="${WIN_APPDATA}/Code/User"
+    CODE_CMD="code.exe"
+    if ! command -v "$CODE_CMD" &>/dev/null; then
+        CODE_FALLBACK="/mnt/c/Program Files/Microsoft VS Code/bin/code"
+        [[ -x "$CODE_FALLBACK" ]] && CODE_CMD="$CODE_FALLBACK"
+    fi
     WORKSPACE_PATH="C:\\\\Workspace"
 else
     # Native Linux
     CURSOR_DIR="$HOME/.config/Cursor/User"
     CURSOR_CMD="cursor"
+    CODE_DIR="$HOME/.config/Code/User"
+    CODE_CMD="code"
     WORKSPACE_PATH="$HOME/Workspace"
 fi
 {{ end }}
 
-# ── Verify Cursor is installed ──────────────────────────────────────────────
-if [[ ! -d "$CURSOR_DIR" ]]; then
-    echo "  cursor: settings directory not found — skipping ($CURSOR_DIR)"
-    exit 0
-fi
-
+# ── Cursor: deploy if installed ────────────────────────────────────────────
+if [[ -d "$CURSOR_DIR" ]]; then
 # ── Deploy settings.json ────────────────────────────────────────────────────
 SETTINGS_SRC="${CHEZMOI_SOURCE}/cursor/settings.json"
 if [[ -f "$SETTINGS_SRC" ]]; then
@@ -120,4 +126,63 @@ if [[ -f "$MCP_SRC" ]]; then
     mkdir -p "$HOME/.cursor"
     cp "$MCP_SRC" "$HOME/.cursor/mcp.json"
     echo "  cursor: global mcp.json deployed"
+fi
+else
+    echo "  cursor: settings directory not found — skipping ($CURSOR_DIR)"
+fi
+
+# ── VS Code: deploy if installed ───────────────────────────────────────────
+if [[ -d "$CODE_DIR" ]]; then
+SETTINGS_SRC="${CHEZMOI_SOURCE}/cursor/settings.json"
+if [[ -f "$SETTINGS_SRC" ]]; then
+    cp "$SETTINGS_SRC" "$CODE_DIR/settings.json"
+    echo "  vscode: settings.json deployed"
+else
+    echo "  vscode: settings.json not found in source — skipping"
+fi
+
+cat > "$CODE_DIR/keybindings.json" << KEYBINDINGS_EOF
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "ctrl+i",
+        "command": "composerMode.agent"
+    },
+    {
+        "key": "ctrl+alt+s",
+        "command": "workbench.action.toggleUnifiedSidebarFromKeyboard",
+        "when": "cursor.agentIdeUnification.enabled == true && !isAuxiliaryWindowFocusedContext"
+    },
+    {
+        "key": "ctrl+o ctrl+m",
+        "command": "workbench.action.files.openFolder",
+        "args": { "defaultUri": "$WORKSPACE_PATH" }
+    }
+]
+KEYBINDINGS_EOF
+echo "  vscode: keybindings.json deployed"
+
+SNIPPETS_SRC="${CHEZMOI_SOURCE}/cursor/snippets"
+if [[ -d "$SNIPPETS_SRC" ]] && ls "$SNIPPETS_SRC"/*.code-snippets &>/dev/null; then
+    mkdir -p "$CODE_DIR/snippets"
+    cp "$SNIPPETS_SRC"/*.code-snippets "$CODE_DIR/snippets/"
+    echo "  vscode: snippets deployed"
+fi
+
+EXTENSIONS_SRC="${CHEZMOI_SOURCE}/cursor/extensions.txt"
+if [[ -f "$EXTENSIONS_SRC" ]] && (command -v "$CODE_CMD" &>/dev/null || [[ -x "$CODE_CMD" ]] ); then
+    INSTALLED=$("$CODE_CMD" --list-extensions 2>/dev/null || true)
+    while IFS= read -r ext; do
+        [[ -z "$ext" ]] && continue
+        if ! echo "$INSTALLED" | grep -qi "^${ext}$"; then
+            echo "  vscode: installing extension $ext"
+            "$CODE_CMD" --install-extension "$ext" 2>/dev/null || true
+        fi
+    done < <(grep -v '^#' "$EXTENSIONS_SRC" | grep -v '^[[:space:]]*$' | grep -v '^anysphere\.')
+    echo "  vscode: extensions synced"
+elif [[ -f "$EXTENSIONS_SRC" ]]; then
+    echo "  vscode: $CODE_CMD not in PATH — skipping extension sync"
+fi
+else
+    echo "  vscode: settings directory not found — skipping ($CODE_DIR)"
 fi

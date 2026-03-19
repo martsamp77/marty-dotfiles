@@ -2,6 +2,8 @@
 
 This document describes every extension in `cursor/extensions.txt`, why it's included, and when you might remove it.
 
+**Note:** Extensions starting with `anysphere.` (e.g. `anysphere.cursorpyright`, `anysphere.remote-wsl`) are Cursor-only and are skipped when syncing to VS Code.
+
 ---
 
 ## Required (guidelines + settings)
@@ -122,7 +124,9 @@ This document describes every extension in `cursor/extensions.txt`, why it's inc
 
 ## Adding or removing extensions
 
-1. Edit `cursor/extensions.txt` — add or delete the extension ID.
-2. Run `chezmoi apply` (or `dotapply`) to sync.
-3. Update this document when adding a new extension so future-you knows why it's there.
+**Manual edit:** Edit `cursor/extensions.txt`, then run `chezmoi apply` (or `dotapply`) to sync.
+
+**Interactive sync:** Run `./scripts/cursor-sync-extensions.sh` to compare installed vs manifest. For each extension installed but not in the list, choose Remove (uninstall), Add to list, or Skip. For extensions in the list but not installed, choose whether to install them.
+
+When adding a new extension, update this document so future-you knows why it's there.
 
