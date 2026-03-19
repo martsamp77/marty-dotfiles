@@ -1,5 +1,5 @@
 # Cursor Extensions Manifest
-# See README "Cursor Extensions" section for full documentation.
+# See README "Cursor Extensions" section and cursor/EXTENSIONS.md for full documentation.
 #
 # List installed:  cursor --list-extensions
 # Overwrite this file:  cursor --list-extensions > cursor/extensions.txt  (from repo root)
@@ -19,12 +19,27 @@ dbaeumer.vscode-eslint
 bradlc.vscode-tailwindcss
 ms-python.black-formatter
 #
+# ─── Python ──────────────────────────────────────────────────────────────────
+anysphere.cursorpyright
+ms-python.python
+ms-python.vscode-pylance
+ms-python.debugpy
+njpwerner.autodocstring
+donjayamanne.python-environment-manager
+#
+# ─── Remote / WSL ────────────────────────────────────────────────────────────
+anysphere.remote-wsl
+ms-vscode-remote.remote-ssh
+ms-vscode-remote.remote-ssh-edit
+ms-vscode-remote.remote-containers
+ms-vscode.remote-explorer
+ms-vscode.remote-server
+#
 # ─── Recommended for MD stack ───────────────────────────────────────────────
 usernamehw.errorlens
 formulahendry.auto-rename-tag
 dsznajder.es7-react-js-snippets
 charliermarsh.ruff
-ms-python.vscode-pylance
 hashicorp.terraform
 mikestead.dotenv
 christian-kohler.path-intellisense
@@ -41,20 +56,18 @@ tauri-apps.tauri-vscode
 # ─── Prisma (if you use Prisma for PostgreSQL) ──────────────────────────────
 Prisma.prisma
 #
-# ─── Optional ──────────────────────────────────────────────────────────────
+# ─── Optional ────────────────────────────────────────────────────────────────
 yzhang.markdown-all-in-one
 aaron-bond.better-comments
 streetsidesoftware.code-spell-checker
 rangav.vscode-thunder-client
 ms-playwright.playwright
-#
-# ─── Already installed (from cursor --list-extensions) ────────────────────────
-anysphere.cursorpyright
-anysphere.remote-wsl
+mechatroner.rainbow-csv
+wholroyd.jinja
+ms-vscode.powershell
 cweijan.vscode-office
 eamodio.gitlens
 johnpapa.vscode-peacock
-ms-python.debugpy
-ms-python.python
-ms-vscode.powershell
+ukoloff.win-ca
+batisteo.vscode-django
 tomoki1207.pdf
