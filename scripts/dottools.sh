@@ -2,7 +2,7 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  dottools — upgrade Cursor, VS Code, git, chezmoi, zsh, fzf
 #
-#  Run manually: dottools
+#  Run: dottools
 #  Skips each tool if not installed. Per-platform: Homebrew (macOS), apt
 #  (Linux/WSL), winget (WSL for Windows IDEs).
 # ══════════════════════════════════════════════════════════════════════════════
