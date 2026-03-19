@@ -9,7 +9,7 @@
 #  Managed files:
 #    cursor/settings.json    → editor preferences, theme, Peacock colors
 #    keybindings.json        → generated inline (OS-aware workspace path)
-#    cursor/extensions.txt   → extension manifest (install via --install-extension)
+#    cursor/extensions.txt   → manifest; install via scripts/cursor-sync-extensions.sh
 #
 #  Files NOT managed (binary / machine-local):
 #    state.vscdb             → SQLite blob (User Rules, chat history, UI state)
@@ -101,24 +101,7 @@ if [[ -d "$SNIPPETS_SRC" ]] && ls "$SNIPPETS_SRC"/*.code-snippets &>/dev/null; t
     echo "  cursor: snippets deployed"
 fi
 
-# ── Sync extensions from manifest ───────────────────────────────────────────
-EXTENSIONS_SRC="${CHEZMOI_SOURCE}/cursor/extensions.txt"
-if [[ -f "$EXTENSIONS_SRC" ]] && (command -v "$CURSOR_CMD" &>/dev/null || [[ -x "$CURSOR_CMD" ]] ); then
-    # Get currently installed extensions
-    INSTALLED=$("$CURSOR_CMD" --list-extensions 2>/dev/null || true)
-
-    # Install missing extensions
-    while IFS= read -r ext; do
-        [[ -z "$ext" || "$ext" =~ ^# ]] && continue
-        if ! echo "$INSTALLED" | grep -qi "^${ext}$"; then
-            echo "  cursor: installing extension $ext"
-            "$CURSOR_CMD" --install-extension "$ext" 2>/dev/null || true
-        fi
-    done < "$EXTENSIONS_SRC"
-    echo "  cursor: extensions synced"
-elif [[ -f "$EXTENSIONS_SRC" ]]; then
-    echo "  cursor: $CURSOR_CMD not in PATH — skipping extension sync"
-fi
+# Extensions: use ./scripts/cursor-sync-extensions.sh when needed (not on every apply)
 
 # ── Deploy global MCP config (if present) ───────────────────────────────────
 MCP_SRC="${CHEZMOI_SOURCE}/cursor/mcp.json"
@@ -169,20 +152,7 @@ if [[ -d "$SNIPPETS_SRC" ]] && ls "$SNIPPETS_SRC"/*.code-snippets &>/dev/null; t
     echo "  vscode: snippets deployed"
 fi
 
-EXTENSIONS_SRC="${CHEZMOI_SOURCE}/cursor/extensions.txt"
-if [[ -f "$EXTENSIONS_SRC" ]] && (command -v "$CODE_CMD" &>/dev/null || [[ -x "$CODE_CMD" ]] ); then
-    INSTALLED=$("$CODE_CMD" --list-extensions 2>/dev/null || true)
-    while IFS= read -r ext; do
-        [[ -z "$ext" ]] && continue
-        if ! echo "$INSTALLED" | grep -qi "^${ext}$"; then
-            echo "  vscode: installing extension $ext"
-            "$CODE_CMD" --install-extension "$ext" 2>/dev/null || true
-        fi
-    done < <(grep -v '^#' "$EXTENSIONS_SRC" | grep -v '^[[:space:]]*$' | grep -v '^anysphere\.')
-    echo "  vscode: extensions synced"
-elif [[ -f "$EXTENSIONS_SRC" ]]; then
-    echo "  vscode: $CODE_CMD not in PATH — skipping extension sync"
-fi
+# Extensions: use ./scripts/vscode-sync-extensions.sh when needed (not on every apply)
 else
     echo "  vscode: settings directory not found — skipping ($CODE_DIR)"
 fi

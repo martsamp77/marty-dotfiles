@@ -382,7 +382,7 @@ dots && git add . && git commit -m "Add .gitconfig" && git push
 
 ## Cursor and VS Code IDE Settings
 
-Cursor and VS Code settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It detects the OS and deploys to each IDE if its settings directory exists. Both IDEs share the same config (settings, keybindings, snippets, extensions); for VS Code, `anysphere.*` extensions are skipped (Cursor-only).
+Cursor and VS Code settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It deploys settings, keybindings, and snippets to each IDE if its settings directory exists. Extensions are not installed on apply (keeps `dotup` fast); use `./scripts/cursor-sync-extensions.sh` or `./scripts/vscode-sync-extensions.sh` when needed.
 
 ### What's synced
 
@@ -423,7 +423,7 @@ Each extension lives in its own folder: `{publisher}.{name}-{version}-{platform}
 `cursor/extensions.txt` is a **manifest file** you maintain in this repo. Cursor does not read it automatically. It is used to:
 
 1. Document which extensions you want installed
-2. Install them on new machines or after a reset (via `chezmoi apply` or manual commands)
+2. Install them on new machines or after a reset (via the sync scripts or manual commands)
 
 Lines starting with `#` are comments and are ignored when installing. For a description of each approved extension and when to add or remove it, see [cursor/EXTENSIONS.md](cursor/EXTENSIONS.md).
 
@@ -455,9 +455,9 @@ Lines starting with `#` are comments and are ignored when installing. For a desc
 
 #### Installing extensions from the manifest
 
-**Option A: Let chezmoi do it** — Run `chezmoi apply` (or `dotapply`). The run script installs extensions from `cursor/extensions.txt` into Cursor and VS Code (skipping `anysphere.*` for VS Code).
+**Option A: Sync scripts** — Run `./scripts/cursor-sync-extensions.sh` or `./scripts/vscode-sync-extensions.sh` to install missing extensions from `cursor/extensions.txt` (VS Code skips `anysphere.*`).
 
-**Option B: Manual install** — Use these commands when you want to sync extensions without running a full chezmoi apply.
+**Option B: Manual install** — Use these commands when you want to install extensions directly.
 
 **Windows PowerShell** (from repo root):
 
