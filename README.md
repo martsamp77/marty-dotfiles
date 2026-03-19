@@ -393,6 +393,7 @@ Cursor settings are synced across machines by the `run_after_apply-cursor.sh.tmp
 | `cursor/snippets/*.code-snippets` | Custom snippets (if any) |
 | `cursor/mcp.json` | Global MCP server config (if present) |
 | `cursor/user-rules.md` | In repo for version control; use import/export scripts to sync with state.vscdb (not auto-deployed) |
+| `cursor/EXTENSIONS.md` | Documentation of all approved extensions and why each is included |
 
 ### Settings paths by OS
 
@@ -424,7 +425,7 @@ Each extension lives in its own folder: `{publisher}.{name}-{version}-{platform}
 1. Document which extensions you want installed
 2. Install them on new machines or after a reset (via `chezmoi apply` or manual commands)
 
-Lines starting with `#` are comments and are ignored when installing.
+Lines starting with `#` are comments and are ignored when installing. For a description of each approved extension and when to add or remove it, see [cursor/EXTENSIONS.md](cursor/EXTENSIONS.md).
 
 #### Updating the manifest manually
 
