@@ -35,8 +35,12 @@ if [[ -f /proc/version ]] && grep -qi microsoft /proc/version 2>/dev/null; then
     # WSL: resolve the Windows AppData path
     WIN_APPDATA=$(wslpath "$(cmd.exe /c "echo %APPDATA%" 2>/dev/null | tr -d '\r')")
     CURSOR_DIR="${WIN_APPDATA}/Cursor/User"
-    # cursor CLI on WSL needs the .exe suffix
     CURSOR_CMD="cursor.exe"
+    # Fallback: Cursor in Program Files when not in PATH
+    if ! command -v "$CURSOR_CMD" &>/dev/null; then
+        CURSOR_FALLBACK="/mnt/c/Program Files/cursor/resources/app/bin/cursor"
+        [[ -x "$CURSOR_FALLBACK" ]] && CURSOR_CMD="$CURSOR_FALLBACK"
+    fi
     WORKSPACE_PATH="C:\\\\Workspace"
 else
     # Native Linux
@@ -93,7 +97,7 @@ fi
 
 # ── Sync extensions from manifest ───────────────────────────────────────────
 EXTENSIONS_SRC="${CHEZMOI_SOURCE}/cursor/extensions.txt"
-if [[ -f "$EXTENSIONS_SRC" ]] && command -v "$CURSOR_CMD" &>/dev/null; then
+if [[ -f "$EXTENSIONS_SRC" ]] && (command -v "$CURSOR_CMD" &>/dev/null || [[ -x "$CURSOR_CMD" ]] ); then
     # Get currently installed extensions
     INSTALLED=$("$CURSOR_CMD" --list-extensions 2>/dev/null || true)
 
