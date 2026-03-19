@@ -245,8 +245,17 @@ alias dotedit='chezmoi edit'                # dotedit ~/.zshrc  → opens source
 alias dotdiff='chezmoi diff'                # Preview what will change before applying
 alias dotapply='chezmoi apply -v'           # Apply source → home (verbose)
 alias dotup='chezmoi update'                # Pull latest from GitHub and apply (fast, no tool upgrades)
-alias dottools='bash "$(chezmoi source-path 2>/dev/null)/scripts/dottools.sh"'  # Upgrade Cursor, VS Code, git, chezmoi, zsh, fzf
 alias dots='chezmoi cd'                     # cd into the chezmoi source directory
+# Upgrade Cursor, VS Code, git, chezmoi, zsh, fzf — run separately to keep dotup fast
+dottools() {
+  local d
+  d=$(chezmoi source-path 2>/dev/null) || d="$HOME/.local/share/chezmoi"
+  if [[ -f "$d/scripts/dottools.sh" ]]; then
+    [[ -x "$d/scripts/dottools.sh" ]] && "$d/scripts/dottools.sh" || bash "$d/scripts/dottools.sh"
+  else
+    echo "dottools: script not found ($d/scripts/dottools.sh)"
+  fi
+}
 
 
 # ─────────────────────────────────────────────────── FZF ───────────────────
