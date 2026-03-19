@@ -57,7 +57,8 @@ if [[ "$OS" == "Linux" ]] && $IS_WSL; then
     command -v chezmoi &>/dev/null && chezmoi upgrade 2>/dev/null || true
     dpkg -l fzf &>/dev/null && sudo apt-get install -y --only-upgrade fzf 2>/dev/null || true
     if cmd.exe /c "winget --version" &>/dev/null; then
-        cmd.exe /c "winget upgrade --id Anysphere.Cursor --id Microsoft.VisualStudioCode --silent --accept-package-agreements --accept-source-agreements" 2>/dev/null || true
+        cmd.exe /c "winget upgrade --id Anysphere.Cursor --silent --accept-package-agreements --accept-source-agreements" 2>/dev/null || true
+        cmd.exe /c "winget upgrade --id Microsoft.VisualStudioCode --silent --accept-package-agreements --accept-source-agreements" 2>/dev/null || true
     fi
     echo "  upgrade-tools: done"
 fi
