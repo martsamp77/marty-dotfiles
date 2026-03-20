@@ -11,6 +11,7 @@ README.md
 CHANGELOG.md
 install.sh
 install-starship.ps1
+install-powershell.ps1
 
 # Cursor settings source files — deployed by run_after_apply-cursor.sh,
 # not directly to $HOME.  The run_after script copies these to the
@@ -19,3 +20,9 @@ cursor
 
 # Helper scripts — invoked manually, not deployed to ~/
 scripts
+
+{{- if ne .chezmoi.os "windows" }}
+# PowerShell profiles — Windows only (pwsh + Windows PowerShell 5.1)
+Documents/PowerShell/Microsoft.PowerShell_profile.ps1
+Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1
+{{- end }}

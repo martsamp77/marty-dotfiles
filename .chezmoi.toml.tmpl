@@ -1,0 +1,11 @@
+{{- if eq .chezmoi.os "windows" -}}
+[data.ps]
+    starship = {{ promptBoolOnce . "ps.starship" "Enable Starship prompt in PowerShell?" false }}
+    prediction = {{ promptChoiceOnce . "ps.prediction" "PSReadLine prediction source" (list "none" "history" "historyandplugin") "history" | quote }}
+    predictionview = {{ promptChoiceOnce . "ps.predictionview" "Prediction view (when prediction is enabled)" (list "inline" "list") "inline" | quote }}
+{{- else -}}
+[data.ps]
+    starship = false
+    prediction = "none"
+    predictionview = "inline"
+{{- end }}

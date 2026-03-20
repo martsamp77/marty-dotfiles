@@ -11,6 +11,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.0] — 2026-03-20
+
+### Added
+- **Windows PowerShell via chezmoi** — Managed profiles for **pwsh** and **Windows PowerShell 5.1** (`Documents/PowerShell/…` and `Documents/WindowsPowerShell/…`), shared body in `.chezmoi/templates/marty-powershell.ps1.tmpl`.
+- **`.chezmoi.toml.tmpl`** — `[data.ps]` with one-time prompts on Windows (Starship, PSReadLine prediction + view); non-Windows machines get safe defaults only.
+- **`.chezmoiignore.tmpl`** — Skips deploying PowerShell profiles on macOS/Linux.
+- **`dotup` / `dotapply` / `dotdiff` / `dotedit` / `dots` / `dottools` / `dotps` / `undotps`** in PowerShell, mirroring the zsh chezmoi shortcuts.
+- **`scripts/dotps.ps1`** — `show`, `wizard`, `off`, `reset` for `[data.ps]` preferences.
+- **`scripts/dottools.ps1`** — winget upgrades for pwsh, chezmoi, Starship, Cursor, VS Code.
+- **`install-powershell.ps1`** — Windows bootstrap (chezmoi init/apply, optional Starship when enabled in data).
+
+### Changed
+- **`DOTFILES_VERSION`** — `1.6.0` in `dot_zshrc.tmpl`.
+- **README** — Windows PowerShell workflow, source-path table entries, platform row.
+
+---
+
 ## [1.5.1] — 2026-03-18
 
 ### Added

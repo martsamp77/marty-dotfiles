@@ -2,7 +2,7 @@
 
 Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) — one config repo, every machine, always in sync.
 
-Manages: **zsh** (shell, prompt, plugins, history) and **Cursor IDE** (settings, keybindings, extensions, snippets, MCP config).
+Manages: **zsh** (shell, prompt, plugins, history), **Windows PowerShell / pwsh** (profiles, Starship + PSReadLine prefs via chezmoi), and **Cursor IDE** (settings, keybindings, extensions, snippets, MCP config).
 
 Supports:
 
@@ -13,6 +13,7 @@ Supports:
 | **Ubuntu desktop / server** | Any Ubuntu 20.04+ machine |
 | **AWS EC2** | Ubuntu AMIs; works in user-data scripts |
 | **Any SSH server** | Any host running zsh ≥ 5.0 |
+| **Windows (native)** | PowerShell 7 + optional Windows PowerShell 5.1 — profiles and `dot*` commands via chezmoi (see below) |
 
 ---
 
@@ -34,6 +35,8 @@ chezmoi uses special prefixes to map source filenames to home-directory paths:
 | Source name | Deployed as |
 |---|---|
 | `dot_zshrc.tmpl` | `~/.zshrc` |
+| `Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl` | `~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1` (Windows, **pwsh** only) |
+| `Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1.tmpl` | `~/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1` (Windows, **5.1** only) |
 
 The `~/.zsh/` plugin directories (pure, zsh-autosuggestions, zsh-syntax-highlighting) are managed by externals — see below. They are not source files in the repo.
 
@@ -356,6 +359,26 @@ C:\PuTTYLogs\&H_&Y&M&D.log
 | Upgrade tools (Cursor, VS Code, git, chezmoi, zsh, fzf) | `dottools` |
 | cd to source directory | `dots` |
 | Commit and push a change | `dots && git add . && git commit -m "..." && git push` |
+
+### Windows PowerShell (native)
+
+PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "windows"`). WSL Ubuntu still uses zsh from `install.sh`.
+
+| Task | Command |
+|---|---|
+| Bootstrap on a new PC | `irm` + `iex` on [`install-powershell.ps1`](install-powershell.ps1) (see script header for one-liner) |
+| Pull from GitHub + apply (same idea as zsh `dotup`) | `dotup` |
+| Show saved PS preferences (`[data.ps]` in chezmoi config) | `dotps show` |
+| Re-run interactive preferences | `dotps wizard` |
+| Turn off Starship + prediction (keeps chezmoi managing the profile) | `undotps` or `dotps off` |
+| Remove `[data.ps]` + backup config; then run `chezmoi init` to re-prompt | `dotps reset` |
+| Upgrade pwsh, chezmoi, Starship, Cursor, VS Code (winget) | `dottools` |
+
+Preferences are stored in **`%USERPROFILE%\.config\chezmoi\chezmoi.toml`** under `[data.ps]` (`starship`, `prediction`, `predictionview`). On first `chezmoi init` on Windows, `.chezmoi.toml.tmpl` prompts once (Starship yes/no, PSReadLine prediction source and view). macOS/Linux clones get defaults only and never receive the PowerShell profile files.
+
+If you already had a hand-edited `chezmoi.toml` without a template, after pulling this repo run **`chezmoi init`** once so `.chezmoi.toml.tmpl` can merge; if you customized `chezmoi.toml` heavily, back it up first and merge any extra sections manually.
+
+The standalone script [`install-starship.ps1`](install-starship.ps1) is still available for Starship-only setup; the chezmoi path above replaces ad-hoc profile edits for day-to-day use.
 
 ---
 
