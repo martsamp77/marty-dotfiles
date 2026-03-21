@@ -1,27 +1,57 @@
 # Changelog
 
-All notable changes to Marty's dotfiles are documented here.
+All notable changes to [Marty's dotfiles](https://github.com/martsamp77/marty-dotfiles) are documented in this file.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+Version numbers follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) (SemVer): **MAJOR.MINOR.PATCH** with no leading `v` in `VERSION` / `DOTFILES_VERSION` (Git tags may use a `v` prefix).
 
-- **MAJOR** — incompatible structural changes (e.g. new dependency, bootstrap change)
-- **MINOR** — new features or significant improvements (backwards-compatible)
-- **PATCH** — bug fixes, comment corrections, cosmetic tweaks
+| Level | When to bump |
+|-------|----------------|
+| **MAJOR** | Incompatible structural or bootstrap changes (e.g. new required tool, breaking chezmoi layout). |
+| **MINOR** | New features or substantial behavior changes that remain backwards-compatible for existing installs. |
+| **PATCH** | Bug fixes, docs-only releases, small refactors, cosmetic or comment-only updates. |
+
+**Canonical version surfaces** (must agree for every release): root [`VERSION`](VERSION), `export DOTFILES_VERSION` in [`dot_zshrc.tmpl`](dot_zshrc.tmpl), and the newest `## [x.y.z]` section below.
+
+For every commit that changes managed configuration, update this file (see [README.md](README.md) → *Maintaining this repository*). The full Git history is available on GitHub: [commits on `main`](https://github.com/martsamp77/marty-dotfiles/commits/main/).
+
+---
+
+## [Unreleased]
+
+### Planned
+- Use Git tags `vX.Y.Z` at release time if you want GitHub compare URLs in release notes (`v1.6.1...v1.6.2`).
+
+---
+
+## [1.6.2] — 2026-03-21
+
+### Added
+- **`VERSION`** — one-line SemVer at the repository root; keep in sync with `DOTFILES_VERSION` and this changelog.
+- **`.githooks/pre-commit`** — if you `git config core.hooksPath .githooks`, commits that touch managed dotfiles must also stage `CHANGELOG.md` (override with `SKIP_CHANGELOG=1` when appropriate).
+- **`.gitattributes`** — forces LF for `.githooks/**` and `*.sh` so hooks run under Git Bash on Windows without `CRLF` / `$'\r': command not found` errors.
+
+### Changed
+- **Documentation** — revised [`cursor/EXTENSIONS.md`](cursor/EXTENSIONS.md) and [`cursor/extensions.txt`](cursor/extensions.txt); updated [`cursor/settings.json`](cursor/settings.json) for editor behavior and preferences.
+- **`dot_zshrc.tmpl`** — refactored OS-aware `update` / `ls` alias definitions for clarity.
+- **`.chezmoiignore.tmpl`** — also excludes `VERSION`, `.gitattributes`, and `.githooks` from ever being deployed to `$HOME`.
+- **`DOTFILES_VERSION`** — `1.6.2`.
 
 ---
 
 ## [1.6.1] — 2026-03-20
 
 ### Changed
-- **zsh-autosuggestions** — Strategy is now `(history completion)` instead of completion-first (avoids nonsense one-character completion guesses). Added `ZSH_AUTOSUGGEST_COMPLETION_IGNORE` for 0–2 character buffers, `ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20` for large pastes, and `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'` so ghost text is distinct from syntax-highlighted comments (`fg=8`) and default foreground.
+- **zsh-autosuggestions** — Strategy is now `(history completion)` instead of completion-first (avoids short-buffer completion noise). Added `ZSH_AUTOSUGGEST_COMPLETION_IGNORE` for 0–2 character buffers, `ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20` for large pastes, and `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'` so ghost text is distinct from syntax-highlighted comments (`fg=8`) and default foreground.
 - **`DOTFILES_VERSION`** — `1.6.1` in `dot_zshrc.tmpl`.
 - **README** — zsh-autosuggestions section updated to match the new strategy and highlight style.
+
+---
 
 ## [1.6.0] — 2026-03-20
 
 ### Added
-- **Windows PowerShell via chezmoi** — Managed profiles for **pwsh** and **Windows PowerShell 5.1** (`Documents/PowerShell/…` and `Documents/WindowsPowerShell/…`), shared body in `.chezmoi/templates/marty-powershell.ps1.tmpl`.
+- **Windows PowerShell via chezmoi** — Managed profiles for **pwsh** and **Windows PowerShell 5.1** (`Documents/PowerShell/…` and `Documents/WindowsPowerShell/…`), shared body in [`.chezmoi/templates/marty-powershell.ps1.tmpl`](.chezmoi/templates/marty-powershell.ps1.tmpl).
 - **`.chezmoi.toml.tmpl`** — `[data.ps]` with one-time prompts on Windows (Starship, PSReadLine prediction + view); non-Windows machines get safe defaults only.
 - **`.chezmoiignore.tmpl`** — Skips deploying PowerShell profiles on macOS/Linux.
 - **`dotup` / `dotapply` / `dotdiff` / `dotedit` / `dots` / `dottools` / `dotps` / `undotps`** in PowerShell, mirroring the zsh chezmoi shortcuts.
@@ -38,193 +68,131 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.5.1] — 2026-03-18
 
 ### Added
-- **Cursor Extensions documentation** — README now includes: where extensions are stored (by OS), what `cursor/extensions.txt` is, how to update the manifest manually, and how to install extensions from the manifest (via chezmoi apply or manual PowerShell/bash commands).
-- **extensions.txt header** — Updated with correct install commands for both PowerShell and bash, and a pointer to README for full documentation.
+- **Cursor IDE sync** — [`run_after_apply-cursor.sh.tmpl`](run_after_apply-cursor.sh.tmpl) deploys Cursor settings, keybindings, snippets, and related files after `chezmoi apply` when the Cursor user directory exists.
+- **VS Code parity** — Same manifest workflow for VS Code; [`scripts/vscode-sync-extensions.sh`](scripts/vscode-sync-extensions.sh) installs from `cursor/extensions.txt` (skips `anysphere.*` IDs).
+- **Extension tooling** — [`scripts/cursor-sync-extensions.sh`](scripts/cursor-sync-extensions.sh) for interactive orphan/missing handling; WSL fallbacks when resolving the `cursor` / `cursor.exe` CLI.
+- **`scripts/dottools.sh`** — Upgrade Cursor, VS Code, git, chezmoi, zsh, and fzf (Homebrew / apt / winget paths); separated from **`dotup`** so routine pulls stay fast.
+- **`install-starship.ps1`** — Standalone Starship-focused installer for Windows PowerShell (chezmoi path supersedes day-to-day ad-hoc profile edits).
+- **Cursor Extensions documentation** — README and [`cursor/EXTENSIONS.md`](cursor/EXTENSIONS.md): where extensions live by OS, what `cursor/extensions.txt` is, manual manifest updates, and install one-liners.
+- **`cursor/extensions.txt` header** — Install commands for PowerShell and bash plus pointers to README / EXTENSIONS.md.
 
 ### Changed
-- **README** — Replaced brief "Populating the extension manifest" section with comprehensive "Cursor Extensions" documentation.
+- **README** — Expanded Cursor/VS Code sections; clarified extension sync vs `chezmoi apply`; documented `dottools` vs `dotup`.
+- **Winget** — Clearer separation of Cursor vs Visual Studio Code upgrade commands in tooling scripts.
 
 ---
 
 ## [1.5.0] — 2026-03-17
 
 ### Added
-- **Local secrets file** — `.zshrc` sources `~/.zshrc.local` at startup if the file exists.
-  API keys and tokens go in that file on each machine; it is never tracked by chezmoi and
-  never reaches GitHub. Each machine can carry different keys or none at all.
-  README documents the pattern and a one-liner for creating the file on a new machine.
-- **History API key masking** — `zshaddhistory` hook intercepts every command before it is
-  written to `~/.zsh_history`. Known secret patterns are redacted and the sanitised version
-  is stored instead; the command itself still executes normally. Patterns covered:
-  `sk_live_*`, `pk_live_*`, `sk-*`, `pk-*` (OpenAI, Anthropic, Stripe, many SaaS tools),
-  `Bearer <token>`, `Authorization: Bearer <token>`, and any environment variable assignment
-  ending in `_KEY`, `_TOKEN`, or `_SECRET`.
+- **Local secrets file** — `.zshrc` sources `~/.zshrc.local` at startup if the file exists. API keys and tokens live there per machine; the file is never tracked by chezmoi. README documents the pattern.
+- **History API key masking** — `zshaddhistory` hook intercepts commands before `~/.zsh_history`. Known secret patterns are redacted; the command still runs. Patterns include `sk_live_*`, `pk_live_*`, `sk-*`, `pk-*`, `sm-*`, `Bearer …`, `Authorization: Bearer …`, and `*_KEY` / `*_TOKEN` / `*_SECRET` assignments.
+- **Docker convenience (non-macOS)** — If `docker` is installed and the service reports not running, attempt `sudo service docker start` (guarded; see `dot_zshrc.tmpl`).
+
+### Changed
+- **Shell defaults** — `EDITOR` / `VISUAL` default to `nano`.
+- **Prompt / terminal** — Iterative Pure and zsh color adjustments for dark backgrounds; `TERM` defaults toward `xterm-256color` on Linux/WSL; git branch color fix for contrast.
 
 ---
 
 ## [1.4.2] — 2026-03-16
 
+### Added
+- **README: PuTTY** — Font (Cascadia Code), UTF-8 translation, window/scrollback, keepalives, optional session logging.
+
 ### Fixed
-- **Ctrl+V paste (WSL) — improved reliability**: `_wsl_paste` widget now tries
-  `powershell.exe` by short name first, then falls back to the full Windows path
-  (`/mnt/c/Windows/System32/.../powershell.exe`). Displays a visible error message
-  if interop is unavailable or the clipboard is empty instead of silently doing nothing.
-- **UTF-8 locale enforcement on Linux/WSL**: Added `export LANG/LC_ALL=en_US.UTF-8`
-  (using `${VAR:-default}` so an explicitly-set locale is never overridden). Fixes
-  `❯` and other Unicode glyphs appearing as squares on fresh Ubuntu/WSL installs
-  where `/etc/default/locale` has not been generated.
-  To generate the locale if missing: `sudo locale-gen en_US.UTF-8 && sudo update-locale LANG=en_US.UTF-8`
+- **Ctrl+V paste (WSL)** — `_wsl_paste` tries `powershell.exe` by short name first, then the full Windows path. Shows an error if interop or clipboard fails instead of failing silently.
+- **UTF-8 locale (Linux/WSL)** — `LANG` / `LC_ALL` default to `en_US.UTF-8` when unset so Unicode (e.g. Pure `❯`) does not render as boxes on minimal Ubuntu/WSL images.
 
 ---
 
 ## [1.4.1] — 2026-03-16
 
 ### Fixed
-- **Home key on WSL / Windows Terminal**: Added `^[OH` (VT100 application-cursor) and
-  `^[[1~` (rxvt / older xterm) as additional `beginning-of-line` bindings so Home works
-  across all terminal variants, not just PuTTY/xterm.
-- **End key on WSL / Windows Terminal**: Same treatment — added `^[OF` and `^[[4~`.
-- **Keypad Enter**: Bound `^[OM` (application-keypad-mode Enter) to `accept-line` so the
-  numeric-keypad Enter key behaves identically to the main keyboard Enter.
-- **Ctrl+V paste on WSL**: Added a WSL-only `_wsl_paste` widget that reads from the
-  Windows clipboard via `powershell.exe -Command Get-Clipboard` and inserts the text at
-  the cursor. Bound to `^V` only when running inside WSL; all other platforms keep the
-  default emacs `quoted-insert` binding.
+- **Home / End (WSL / Windows Terminal)** — Extra `beginning-of-line` / `end-of-line` bindings for `^[OH`, `^[[1~`, `^[OF`, `^[[4~`.
+- **Keypad Enter** — `^[OM` bound to `accept-line`.
+- **Ctrl+V (WSL)** — WSL-only `_wsl_paste` via `Get-Clipboard`; other platforms keep `quoted-insert`.
 
 ---
 
 ## [1.4.0] — 2026-03-16
 
 ### Added
-- `install.sh` — one-command bootstrap script for new machines.
-  Detects macOS / Ubuntu / WSL, installs Homebrew (macOS), zsh, git, fzf,
-  chezmoi, sets zsh as the default shell, generates the `en_US.UTF-8` locale
-  (fixes `❯` rendering as a square on Ubuntu), and runs `chezmoi init --apply`.
-  Tries SSH first, falls back to HTTPS automatically.
-  One-liner: `bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)`
-- Added `install.sh` to `.chezmoiignore` so it stays in the repo but is not
-  deployed to `$HOME`.
+- **`install.sh`** — One-command bootstrap for macOS, Ubuntu, and WSL (Homebrew, zsh, git, fzf, chezmoi, default shell, locale generation, SSH→HTTPS fallback, `chezmoi init --apply`).
+- **`install.sh` in `.chezmoiignore`** — Script stays in the repo only, not deployed to `$HOME`.
 
 ---
 
 ## [1.3.2] — 2026-03-16
 
 ### Fixed
-- Renamed `dot_zshrc` → `dot_zshrc.tmpl` so chezmoi processes `{{ if eq .chezmoi.os }}`
-  template blocks at apply time.  Without the `.tmpl` suffix, chezmoi copies the file
-  verbatim and zsh fails to start with "command not found: eq" and "parse error near end".
+- Renamed `dot_zshrc` → `dot_zshrc.tmpl` so chezmoi evaluates `{{ if eq .chezmoi.os }}` at apply time (avoids zsh parse errors from raw template text).
 
 ---
 
 ## [1.3.1] — 2026-03-16
 
 ### Fixed
-- Added `.chezmoiignore` to prevent `README.md` and `CHANGELOG.md` from being
-  deployed to `$HOME` by chezmoi (they belong in the repo, not in `~/`).
+- **`.chezmoiignore`** — `README.md` and `CHANGELOG.md` are not deployed into `$HOME`.
 
 ### Changed
-- README Troubleshooting section updated with instructions for resolving a stuck
-  `chezmoi update` rebase conflict and for recovering from a missed `chezmoi apply`.
+- **README** — Troubleshooting for stuck `chezmoi update` rebase conflicts and missed `chezmoi apply`.
 
 ---
 
 ## [1.3.0] — 2026-03-16
 
 ### Added
-- `.chezmoiexternal.toml` — declares all three plugins (Pure, zsh-autosuggestions,
-  zsh-syntax-highlighting) as chezmoi-managed external git repos with a 168 h weekly
-  auto-refresh period.  `chezmoi apply --refresh-externals` forces an immediate update.
+- **`.chezmoiexternal.toml`** — Pure, zsh-autosuggestions, and zsh-syntax-highlighting as chezmoi externals with `refreshPeriod = 168h`.
 
 ### Changed
-- Plugin loading in `dot_zshrc` simplified from helper functions with inline `git clone`
-  fallbacks to plain guarded `source` statements — chezmoi externals guarantee the
-  files exist after any `chezmoi apply`.
-- README updated with full documentation of the externals model, including a command
-  reference table for first-time setup, force-refresh, and auto-update workflows.
+- **Plugin loading** — Plain guarded `source` lines; chezmoi externals own clone/update.
 
 ### Removed
-- `dot_zsh/` directory and all vendored plugin source trees (`pure/`,
-  `zsh-autosuggestions/`, `zsh-syntax-highlighting/`) — hundreds of third-party files
-  are no longer committed into the repository.
-- `_zsh_plugin_load` and `_zsh_fpath_load` helper functions (no longer needed now that
-  chezmoi manages the plugin directories).
+- **Vendored `dot_zsh/` plugin trees** — Third-party plugin source removed from the repo in favor of externals.
+- **`_zsh_plugin_load` / `_zsh_fpath_load`** — No longer used.
 
 ---
 
 ## [1.2.0] — 2026-03-16
 
 ### Added
-- **Pure prompt** (sindresorhus/pure) — replaces the hand-rolled `vcs_info` prompt.
-  Two-line layout, async git status, no Nerd Fonts required, SSH/PuTTY-safe.
-  Vendored into `dot_zsh/pure/` (later removed in v1.3.0 in favour of externals).
-- `_zsh_fpath_load` helper — mirrors `_zsh_plugin_load` for `$fpath`-based plugins,
-  with silent `git clone` fallback.
-- **`ZSH_HIGHLIGHT_STYLES` color scheme** — 13 token types explicitly colored for dark
-  terminal backgrounds: commands (green bold), unknown tokens (red bold), flags
-  (magenta), strings (yellow), paths (white underline), comments (dark grey), etc.
-- Pure `zstyle` color overrides: cyan path, bright-blue git branch, yellow dirty flag,
-  magenta prompt success, red prompt error, green user/host (SSH sessions only).
+- **Pure prompt** — Replaces hand-rolled `vcs_info` prompt; two-line layout, async git, SSH/PuTTY-friendly.
+- **`ZSH_HIGHLIGHT_STYLES`** — Explicit dark-background-friendly colors for syntax highlighting.
+- **Pure `zstyle` overrides** — Path, git, dirty, prompt success/error, SSH user/host colors.
 
 ### Changed
-- Removed `vcs_info` / `precmd_functions` / `PROMPT=` block — entirely replaced by
-  `autoload -U promptinit; promptinit; prompt pure`.
-- README updated with Pure documentation, color override table, and plugin management
-  explanation.
+- **Prompt implementation** — `promptinit` + `prompt pure` instead of custom `PROMPT=` / `precmd` block.
+- **README** — Pure documentation and plugin story.
 
 ---
 
 ## [1.1.0] — 2026-03-16
 
 ### Added
-- `compinit` `.zcompdump` caching — dump rebuilt at most once per 24 hours via
-  extended glob timestamp check; `compinit -C` used on subsequent starts for speed.
-- **macOS Homebrew PATH** — `brew shellenv` evaluated for Apple Silicon
-  (`/opt/homebrew`) with Intel fallback (`/usr/local`), inside chezmoi `darwin` block.
-- **Dotfile management aliases** — `dotedit`, `dotdiff`, `dotapply`, `dotup`, `dots`
-  (were documented in README but missing from the file itself).
-- `_zsh_plugin_load` helper function with silent `git clone` fallback if a plugin
-  directory is missing after a partial `chezmoi apply`.
-- `setopt AUTO_CD` — type a bare directory name to cd into it.
-- `setopt NO_BEEP` — silence all terminal bell characters.
-- `dircolors` guard — `command -v dircolors &>/dev/null` prevents crash on macOS where
-  `dircolors` is not installed by default.
+- **`compinit` caching** — `.zcompdump` rebuilt at most once per 24 hours.
+- **macOS Homebrew PATH** — `brew shellenv` for Apple Silicon and Intel.
+- **Dotfile aliases** — `dotedit`, `dotdiff`, `dotapply`, `dotup`, `dots`.
+- **`_zsh_plugin_load`** — Clone fallback for missing plugin dirs (superseded by externals in 1.3.0).
+- **`AUTO_CD`**, **`NO_BEEP`**, **`dircolors` guard**.
 
 ### Fixed
-- `chezmoi apply --refresh --force` — `--refresh` is not a valid chezmoi flag; replaced
-  with the correct `chezmoi update --force`.
-- `bindkey '^V' put-clipboard` — `put-clipboard` is not a built-in zsh widget; binding
-  failed silently on every session startup.  Removed.
-- Startup printed 8 blank lines — `$ZSH_REVISION`, `$ZSH_BUILD_DATE`, `$ZSH_BUILD_HOST`
-  etc. are not standard zsh variables and expand to empty strings.  Replaced with a
-  single `print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"` greeting.
-- `eval "$(dircolors -b)"` ran unconditionally on macOS where the binary does not exist,
-  causing a silent error on every shell start.
+- Replaced invalid `chezmoi apply --refresh` with `chezmoi update --force`.
+- Removed invalid `bindkey '^V' put-clipboard`.
+- Startup blank lines from nonexistent `$ZSH_REVISION`-style variables.
+- macOS `dircolors` errors.
 
 ### Changed
-- `compinit` now uses a 24-hour cache check instead of running full init every session.
-- `chezmoi update` background auto-sync now uses `disown` to suppress stray "Done"
-  job-completion messages.
-- README completely rewritten — fixed broken code block formatting, added platform
-  support table, complete feature documentation, daily workflow table, and
-  troubleshooting section.
+- **Auto-sync** — `disown` to suppress stray job-control messages.
+- **README** — Platform table, features, workflow, troubleshooting.
 
 ---
 
 ## [1.0.0] — 2026-03-15
 
 ### Added
-- Initial chezmoi-managed dotfiles repository.
-- `dot_zshrc` with:
-  - 1,000,000-line shared, deduplicated, timestamped history.
-  - Smart menu-driven tab completion with `zstyle`.
-  - `vcs_info`-based prompt (bright green user@host, cyan path, red git branch) tuned
-    for dark PuTTY/SSH terminal backgrounds.
-  - Emacs key bindings with PuTTY Home/End fallback sequences.
-  - Common aliases (`ll`, `grep`, `..`, `history-stats`, `cd`+auto-ls).
-  - OS-aware `update` and `ls` aliases via chezmoi `{{ if eq .chezmoi.os "darwin" }}`
-    templates.
-  - `fzf` integration with dark-background color palette.
-  - Background auto-sync: git fetch + chezmoi apply on every shell session.
-- `dot_zsh/zsh-autosuggestions/` — fish-style ghost-text history suggestions, vendored.
-- `dot_zsh/zsh-syntax-highlighting/` — real-time command colorization, vendored.
-- Initial README.md.
+- Initial chezmoi-managed repository: `dot_zshrc`, vendored autosuggestions and syntax-highlighting, history/completion/prompt/fzf/auto-sync, OS-aware templates, and first README.
+
+---
+
+*Repository: [github.com/martsamp77/marty-dotfiles](https://github.com/martsamp77/marty-dotfiles)*

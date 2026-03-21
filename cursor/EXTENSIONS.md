@@ -1,5 +1,10 @@
 # Cursor Extensions — Recommended set
 
+**Dotfiles repo:** [github.com/martsamp77/marty-dotfiles](https://github.com/martsamp77/marty-dotfiles)  
+**Related docs:** [README — Cursor & VS Code](../README.md#cursor-and-vs-code-ide-settings) · [Changelog](../CHANGELOG.md) · Canonical extension IDs: [`extensions.txt`](extensions.txt)
+
+---
+
 This list is **curated for Marty’s workflows** as reflected in `cursor/settings.json` and this dotfiles repo: Python (Black, Ruff, Django, Jinja), Node/React/TypeScript (Prettier, ESLint, Tailwind, Vite-style nesting), remote development (WSL, SSH, Containers), Terraform, GitHub Actions, NetSuite tooling when needed, and Windows-friendly extras (PowerShell, `win-ca`, PDF/Office viewers).
 
 The canonical ID list is **`cursor/extensions.txt`**. After changing the manifest, install missing extensions with `./scripts/cursor-sync-extensions.sh` or the PowerShell/bash one-liners in that file’s header.

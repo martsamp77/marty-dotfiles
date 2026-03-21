@@ -1,0 +1,16 @@
+#!/bin/sh
+# Require CHANGELOG.md to be staged when version-worthy paths change.
+# Enable: git config core.hooksPath .githooks
+# See README.md -> "Maintaining this repository".
+
+[ -n "$SKIP_CHANGELOG" ] && exit 0
+
+changed=$(git diff --cached --name-only)
+echo "$changed" | grep -qE '^(\.chezmoi/|\.chezmoi\.toml\.tmpl|\.chezmoiexternal\.toml|\.chezmoiignore\.tmpl|\.githooks/|\.gitattributes|Documents/|dot_zshrc\.tmpl|dot_config/|install\.sh|install-.*\.ps1|run_after_apply|scripts/|cursor/|VERSION)$' || exit 0
+
+echo "$changed" | grep -q '^CHANGELOG\.md$' || {
+	printf '\n%s\n' "marty-dotfiles: staged changes touch managed dotfiles but CHANGELOG.md is not staged."
+	printf '%s\n' "  Add an entry under [Unreleased] or ship a new ## [x.y.z] section (see README)."
+	printf '%s\n\n' "  To bypass (avoid for real releases): SKIP_CHANGELOG=1 git commit"
+	exit 1
+}

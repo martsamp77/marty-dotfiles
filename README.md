@@ -1,48 +1,206 @@
 # Marty's Dotfiles
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/) — one config repo, every machine, always in sync.
+Personal configuration managed with [chezmoi](https://www.chezmoi.io/): one Git-backed source directory, applied consistently on every machine. Shell setup covers **zsh** (prompt, plugins, history, auto-sync) and **Windows PowerShell / pwsh** (profiles, Starship and PSReadLine preferences). **Cursor** and **VS Code** editor settings are deployed from this repo when those apps are present.
 
-Manages: **zsh** (shell, prompt, plugins, history), **Windows PowerShell / pwsh** (profiles, Starship + PSReadLine prefs via chezmoi), and **Cursor IDE** (settings, keybindings, extensions, snippets, MCP config).
-
-Supports:
-
-| Platform | Notes |
+| | |
 |---|---|
-| **macOS** | Apple Silicon (`/opt/homebrew`) and Intel (`/usr/local`) |
-| **Ubuntu WSL** | Windows 10/11 with WSL 2 running Ubuntu |
-| **Ubuntu desktop / server** | Any Ubuntu 20.04+ machine |
-| **AWS EC2** | Ubuntu AMIs; works in user-data scripts |
-| **Any SSH server** | Any host running zsh ≥ 5.0 |
-| **Windows (native)** | PowerShell 7 + optional Windows PowerShell 5.1 — profiles and `dot*` commands via chezmoi (see below) |
+| **Current release (SemVer)** | **1.6.2** — see [CHANGELOG.md](CHANGELOG.md) |
+| **Runtime check** | After apply: `echo $DOTFILES_VERSION` (exported from [`dot_zshrc.tmpl`](dot_zshrc.tmpl)) |
+| **Upstream** | [github.com/martsamp77/marty-dotfiles](https://github.com/martsamp77/marty-dotfiles) |
 
 ---
 
-## How It Works
+## Table of contents
 
-### chezmoi
+1. [Documentation map](#documentation-map)
+2. [Project overview](#project-overview)
+3. [Versioning](#versioning)
+4. [Fresh install](#fresh-install)
+5. [Updates and daily workflow](#updates-and-daily-workflow)
+6. [Maintaining this repository](#maintaining-this-repository)
+7. [Change history](#change-history)
+8. [How it works (chezmoi)](#how-it-works-chezmoi)
+9. [Features](#features)
+10. [Cursor and VS Code IDE settings](#cursor-and-vs-code-ide-settings)
+11. [Adding a new dotfile](#adding-a-new-dotfile)
+12. [Windows PowerShell (native)](#windows-powershell-native)
+13. [Auto-apply on SSH login / EC2 user-data](#auto-apply-on-ssh-login--ec2-user-data)
+14. [PuTTY setup (Windows)](#putty-setup-windows)
+15. [API keys and local secrets](#api-keys-and-local-secrets)
+16. [Templates](#templates)
+17. [Troubleshooting](#troubleshooting)
+18. [Why chezmoi?](#why-chezmoi)
 
-[chezmoi](https://www.chezmoi.io/) is the engine. It manages dotfiles by keeping a **source directory** (`~/.local/share/chezmoi/`) that mirrors what should end up in your home directory, then applying it with a single command. Key benefits over manual symlinks or a bare git repo:
+---
 
-- **Templates** — the same source file can render differently per OS, hostname, or any machine-specific variable. The `{{ if eq .chezmoi.os "darwin" }}` blocks in `.zshrc` are evaluated at apply time, so macOS gets `brew upgrade` while Linux gets `apt upgrade -y` — from one source file.
-- **Git-native** — the source directory is just a git repo. Push to GitHub, pull on any machine, apply in seconds.
-- **No symlinks** — chezmoi copies files, so accidental edits to `~/.zshrc` don't corrupt the source.
-- **Single binary** — one static binary, no runtime dependencies.
+## Documentation map
+
+| Document | Purpose |
+|----------|---------|
+| [README.md](README.md) | Overview, install, updates, workflows, troubleshooting (this file). |
+| [CHANGELOG.md](CHANGELOG.md) | Human-readable release history; must be updated when version-worthy files change. |
+| [VERSION](VERSION) | Canonical SemVer string for the repo (must match `DOTFILES_VERSION` and the latest changelog heading). |
+| [cursor/EXTENSIONS.md](cursor/EXTENSIONS.md) | Why each recommended Cursor/VS Code extension is listed; pairs with [`cursor/extensions.txt`](cursor/extensions.txt). |
+| [cursor/extensions.txt](cursor/extensions.txt) | Extension ID manifest used by sync scripts (not read by Cursor automatically). |
+| [cursor/user-rules.md](cursor/user-rules.md) | Exported Cursor user rules for version control; sync via scripts (see IDE section). |
+| [install.sh](install.sh) | macOS / Ubuntu / WSL bootstrap. |
+| [install-powershell.ps1](install-powershell.ps1) | Windows (native) PowerShell bootstrap. |
+| [.gitattributes](.gitattributes) | Line endings (`LF` for hooks and `*.sh` on Windows). |
+| [.githooks/pre-commit](.githooks/pre-commit) | Optional guard: stage `CHANGELOG.md` when dotfile sources change. |
+
+---
+
+## Project overview
+
+chezmoi keeps a **source directory** (`~/.local/share/chezmoi/`) that mirrors what should exist in your home directory, then **applies** it with one command. Templates (`{{ if eq .chezmoi.os "darwin" }}`, and so on) let one file render differently per OS or host.
+
+**Managed today:** zsh, PowerShell (Windows only via templates), Cursor/VS Code assets (via `run_after_apply`), Starship config, chezmoi metadata templates, and helper scripts under `scripts/`.
+
+### Supported platforms
+
+| Platform | Notes |
+|----------|-------|
+| **macOS** | Apple Silicon (`/opt/homebrew`) and Intel (`/usr/local`) |
+| **Ubuntu WSL** | Windows 10/11 with WSL 2 running Ubuntu |
+| **Ubuntu desktop / server** | Ubuntu 20.04+ |
+| **AWS EC2** | Ubuntu AMIs; suitable for user-data scripts |
+| **Any SSH server** | Hosts running zsh ≥ 5.0 |
+| **Windows (native)** | PowerShell 7 + optional Windows PowerShell 5.1 — profiles and `dot*` commands via chezmoi (see [Windows PowerShell](#windows-powershell-native)) |
+
+---
+
+## Versioning
+
+This project uses **[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)** (`MAJOR.MINOR.PATCH`):
+
+- **MAJOR** — incompatible structural or bootstrap changes.
+- **MINOR** — new features or substantial behavior changes, backwards-compatible for existing installs.
+- **PATCH** — bug fixes, documentation releases, small refactors.
+
+**Canonical surfaces** (all must match when you cut a release):
+
+1. [`VERSION`](VERSION) — single line, e.g. `1.6.2` (no `v` prefix).
+2. [`dot_zshrc.tmpl`](dot_zshrc.tmpl) — `export DOTFILES_VERSION="…"`.
+3. [`CHANGELOG.md`](CHANGELOG.md) — new `## [x.y.z] — YYYY-MM-DD` section with notes.
+
+Optional but useful: create an annotated Git tag for the same number (many teams use a `v` prefix on tags only, e.g. `v1.6.2`), then publish [GitHub Releases](https://github.com/martsamp77/marty-dotfiles/releases) from that tag.
+
+---
+
+## Fresh install
+
+### Unix (macOS, Ubuntu, WSL) — one-liner (recommended)
+
+```bash
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
+```
+
+The script installs Homebrew (macOS if needed), `zsh`, `git`, `fzf`, `chezmoi`, sets zsh as the login shell, generates `en_US.UTF-8` on Ubuntu where needed, prefers SSH to GitHub with HTTPS fallback, and runs `chezmoi init --apply`. Then reload:
+
+```bash
+exec zsh
+```
+
+### Unix — manual steps
+
+1. **Install zsh** — macOS: already default on recent releases. Ubuntu / WSL / AWS: `sudo apt install -y zsh` and `chsh -s $(which zsh)` (re-login).
+2. **Install chezmoi** — macOS: `brew install chezmoi`. Ubuntu: `sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin` and add `~/.local/bin` to `PATH`.
+3. **Initialize** — `chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git` (or the HTTPS URL).
+4. **Reload** — `exec zsh`.
+
+### Windows (native PowerShell)
+
+Use the script header in [`install-powershell.ps1`](install-powershell.ps1) for the `irm` / `iex` one-liner, or run `.\install-powershell.ps1` from a clone. That path installs chezmoi if needed, runs `chezmoi init --apply`, and applies Windows-only templates (including optional Starship via `[data.ps]`).
+
+WSL Ubuntu shells still use the Unix flow above; Cursor on Windows uses Windows-side paths — see [Cursor and VS Code](#cursor-and-vs-code-ide-settings).
+
+---
+
+## Updates and daily workflow
+
+### How updates reach your machines
+
+- **zsh:** On each new session, `.zshrc` can run a background check against GitHub and invoke `chezmoi update --force` when `main` has moved (subshell + `disown` so the prompt is not blocked).
+- **Manual:** Use the aliases below from any configured machine.
+
+### Command cheat sheet (zsh)
+
+| Task | Command |
+|------|---------|
+| Edit a managed file in the source tree | `dotedit ~/.zshrc` |
+| Preview pending changes | `dotdiff` |
+| Apply local source to the home directory | `dotapply` |
+| Pull from GitHub and apply | `dotup` |
+| Upgrade IDEs and toolchain (separate from `dotup`) | `dottools` |
+| Open a shell in the chezmoi source directory | `dots` |
+| Commit and push | `dots && git add . && git commit -m "…" && git push` |
+
+### chezmoi refreshes (plugins)
+
+Plugins (Pure, zsh-autosuggestions, zsh-syntax-highlighting) are **externals** in [`.chezmoiexternal.toml`](.chezmoiexternal.toml), not vendored in this repo:
+
+| Goal | Command |
+|------|---------|
+| First-time / normal apply | `chezmoi apply` |
+| Force-refresh all externals now | `chezmoi apply --refresh-externals` |
+| Pull dotfiles + refresh on schedule | `chezmoi update` (weekly refresh per `refreshPeriod`) |
+
+---
+
+## Maintaining this repository
+
+### Changelog discipline
+
+Any commit that changes **managed configuration** should also update **[CHANGELOG.md](CHANGELOG.md)**:
+
+- For work in progress, add bullets under `## [Unreleased]` (see the changelog file).
+- For a release, add `## [x.y.z] — date`, move items out of Unreleased, and bump **`VERSION`** and **`DOTFILES_VERSION`** together.
+
+### Enforcing changelog updates (optional hook)
+
+This repo includes [`.githooks/pre-commit`](.githooks/pre-commit). After cloning, enable it once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+On Windows with **Git for Windows**, hooks run with the bundled Bash; the executable bit is stored in Git (`100755`) for `pre-commit`. [`.gitattributes`](.gitattributes) keeps hook and `*.sh` files as **LF** so POSIX `sh` does not see stray `\r` characters.
+
+The hook **requires `CHANGELOG.md` to be staged** whenever staged paths include things like `dot_zshrc.tmpl`, `.chezmoi/`, `cursor/`, `scripts/`, `install*.sh`, `Documents/`, `run_after_apply*`, `dot_config/`, or `VERSION`. For rare commits where that is inappropriate, use:
+
+```bash
+SKIP_CHANGELOG=1 git commit -m "…"
+```
+
+### Commit messages
+
+[Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`) keep `git log` readable and align with the changelog narrative.
+
+---
+
+## Change history
+
+Authoritative release notes: **[CHANGELOG.md](CHANGELOG.md)** (reconciled against the full [commit history on `main`](https://github.com/martsamp77/marty-dotfiles/commits/main/)).
+
+---
+
+## How it works (chezmoi)
 
 ### Source file naming
 
-chezmoi uses special prefixes to map source filenames to home-directory paths:
+chezmoi maps special prefixes to paths under `$HOME`:
 
 | Source name | Deployed as |
-|---|---|
+|-------------|-------------|
 | `dot_zshrc.tmpl` | `~/.zshrc` |
 | `Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl` | `~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1` (Windows, **pwsh** only) |
 | `Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1.tmpl` | `~/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1` (Windows, **5.1** only) |
 
-The `~/.zsh/` plugin directories (pure, zsh-autosuggestions, zsh-syntax-highlighting) are managed by externals — see below. They are not source files in the repo.
+The `~/.zsh/` plugin directories come from **externals** (see [Updates](#updates-and-daily-workflow)), not from committed plugin trees.
 
-### Plugin management — `.chezmoiexternal.toml`
+### External plugins (excerpt)
 
-Plugins are **not** committed into this repository. Instead, they are declared as external git repositories in [`.chezmoiexternal.toml`](.chezmoiexternal.toml) at the repo root:
+Defined in [`.chezmoiexternal.toml`](.chezmoiexternal.toml):
 
 ```toml
 [".zsh/pure"]
@@ -61,22 +219,17 @@ Plugins are **not** committed into this repository. Instead, they are declared a
     refreshPeriod = "168h"
 ```
 
-When you run `chezmoi apply`, chezmoi clones each repo to the target path (`~/.zsh/<name>/`) if it is not already present. When you run `chezmoi update`, chezmoi re-pulls any that are older than `refreshPeriod` (168 h = weekly). Plugins are never stored in the dotfiles repo — the repo stays small and plugins stay current.
+On a **new** machine, `chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git` fetches this config, clones plugins into `~/.zsh/`, and deploys `.zshrc` — no separate plugin install step.
 
-**Key commands:**
+### Why chezmoi (short)
 
-| Goal | Command |
-|---|---|
-| Install all plugins on a new machine | `chezmoi apply` |
-| Force-refresh all plugins right now | `chezmoi apply --refresh-externals` |
-| Auto-update plugins + dotfiles | `chezmoi update` (runs weekly refresh automatically) |
+- **Templates** — one source, many targets (OS / host aware).
+- **Git-native** — push/pull like any repo.
+- **No symlinks** — copies avoid accidental corruption of the source.
+- **Single binary** — easy to install everywhere.
+- **Idempotent** — `chezmoi apply` is safe to repeat.
 
-**What happens on a brand-new machine:**
-
-1. `chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git`
-2. chezmoi fetches `.chezmoiexternal.toml`, clones all three plugin repos to `~/.zsh/`
-3. `.zshrc` is deployed and sources the plugins from `~/.zsh/`
-4. Everything works — no separate install step needed
+More: [chezmoi.io](https://www.chezmoi.io/).
 
 ---
 
@@ -85,506 +238,218 @@ When you run `chezmoi apply`, chezmoi clones each repo to the target path (`~/.z
 ### History
 
 - 1,000,000-line history file (`~/.zsh_history`)
-- Shared across all open terminal windows in real time (`SHARE_HISTORY`)
-- Timestamps recorded for every entry (`EXTENDED_HISTORY`)
-- Exact duplicates never stored (`HIST_IGNORE_ALL_DUPS`)
-- Commands prefixed with a space are never saved (`HIST_IGNORE_SPACE`) — useful for passwords
-- **API key masking** — a `zshaddhistory` hook intercepts every command before it is written to disk, redacts known secret patterns (`sk-...`, `sk_live_...`, `Bearer ...`, `*_KEY=...`, `*_TOKEN=...`, `*_SECRET=...`), and stores the sanitised version instead. The command still runs normally; only the history entry is redacted.
+- Shared across terminals (`SHARE_HISTORY`), timestamps (`EXTENDED_HISTORY`), no exact duplicates (`HIST_IGNORE_ALL_DUPS`)
+- Commands prefixed with a space omitted (`HIST_IGNORE_SPACE`)
+- **API key masking** — `zshaddhistory` redacts common secret patterns before write (`sk-…`, `Bearer …`, `*_KEY=…`, and similar); the command still runs
 
 ### Completion
 
-- Menu-driven tab completion with arrow-key navigation
-- Case-insensitive and partial-match support
-- Kill-process completion shows a formatted `ps` output
-- Colorized with `LS_COLORS` on Linux/WSL
-- `.zcompdump` rebuilt at most once per 24 hours for fast startup
+- Menu-driven tab completion, case-insensitive / partial match
+- Kill completion shows formatted `ps` output
+- Colorized listings with `LS_COLORS` on Linux/WSL
+- `.zcompdump` rebuilt at most once per 24 hours
 
-### Prompt
+### Prompt (Pure)
 
-```
-marty@myserver ~/projects/foo (main) $
-```
-
-- `%F{10}` bright green — `user@host`
-- `%F{14}` bright cyan — current directory
-- `%F{9}` bright red — git branch (via `vcs_info`, built into zsh)
-- Chosen specifically for readability on **dark backgrounds**: PuTTY default black, SSH sessions, Windows Terminal dark themes, tmux
-
-### Pure Prompt
-
-[Pure](https://github.com/sindresorhus/pure) — 14k stars, minimal, no Nerd Fonts required, works identically over SSH/PuTTY/WSL/macOS. Managed as a chezmoi external — cloned to `~/.zsh/pure/` on `chezmoi apply`, never committed to the repo.
+[Pure](https://github.com/sindresorhus/pure) — minimal, no Nerd Fonts, consistent over SSH. Managed as a chezmoi external under `~/.zsh/pure/`.
 
 ```
 ~/dev/myproject master*
 ❯
 ```
 
-- Two-line layout — path + git status on line 1, `❯` on line 2
-- `❯` turns **red** on a non-zero exit, **magenta** on success
-- User@host only shown during SSH sessions (hidden locally)
-- Git status fetched **asynchronously** — never delays the prompt
-
-Color overrides for dark backgrounds are applied via `zstyle`:
-
-| Element | Color |
-|---|---|
-| Path | Cyan |
-| Git branch | Bright cyan (#00ffff) |
-| Dirty indicator | Yellow |
-| Prompt success | Magenta |
-| Prompt error | Red |
-| User / host (SSH) | Green |
-
-**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/pure/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
+Color overrides (dark backgrounds) use `zstyle` — cyan path, bright git context, yellow dirty, magenta success prompt, red error prompt, green user@host on SSH.
 
 ### zsh-autosuggestions
 
-[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text command suggestions as you type. The dotfiles use **history first**, then **completion** as a fallback (with completion disabled for very short buffers), so suggestions stay predictable rather than mirroring arbitrary tab-completion order.
-
-- As you type, a dim gray *italic* suggestion appears to the right of your cursor (styled to read differently from both normal text and `#` comments)
-- Press **→** (right arrow) or **End** to accept the full suggestion
-- Press **Ctrl+→** to accept one word at a time
-- Completely non-intrusive — keep typing to ignore it
-
-**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/zsh-autosuggestions/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
+[History-first, then completion](https://github.com/zsh-users/zsh-autosuggestions); short buffers ignore completion noise; large pastes capped; ghost text styled distinct from comments.
 
 ### zsh-syntax-highlighting
 
-[zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) colors your command line in real time as you type — before you hit Enter.
+[Real-time highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) — load **last** so it wraps all ZLE widgets correctly.
 
-- **Green** — valid, recognized command
-- **Red** — unknown command or typo (catch errors before running)
-- **Yellow** — command arguments and flags
-- **Cyan** — shell built-ins and keywords
-- Strings, paths, variables, and redirections are all distinctly colored
+### fzf
 
-**Why load it last:** Syntax highlighting works by wrapping zsh line editor (ZLE) widgets. It must be sourced _after_ all other plugins and key bindings so it can wrap them all correctly. Loading it earlier breaks other widget bindings.
+If `fzf` is installed, `~/.fzf.zsh` is sourced — **Ctrl+R** history, **Ctrl+T** files, colors tuned for dark backgrounds.
 
-**How it's managed:** Declared as an external in `.chezmoiexternal.toml`. chezmoi clones it to `~/.zsh/zsh-syntax-highlighting/` on `chezmoi apply` and refreshes it weekly on `chezmoi update`.
-
-### fzf (fuzzy finder)
-
-If `fzf` is installed, `.zshrc` sources `~/.fzf.zsh` automatically.
-
-- **Ctrl+R** — interactive fuzzy history search (replaces the default history search)
-- **Ctrl+T** — fuzzy file picker, inserts the selected path at the cursor
-- Colors tuned for dark terminal backgrounds
-
-### Auto-sync on every shell session
-
-Every time you open a terminal or SSH into a machine, `.zshrc` silently checks GitHub for dotfile updates in the background:
-
-1. `git fetch origin main` — check for new commits (no download yet)
-2. Compare `HEAD` vs `origin/main` — if equal, done
-3. If different: run `chezmoi update --force` — pull + apply
-4. Print a one-line status message
-
-The entire process runs in a background subshell (`&` + `disown`) so it **never delays your prompt**. You'll only see a message when an actual update occurs.
-
-### PuTTY / SSH terminal compatibility
-
-Key bindings are set with `bindkey -e` (Emacs mode) for maximum compatibility across PuTTY, MobaXterm, Windows Terminal + WSL, macOS Terminal, and any standard SSH session. Home and End are bound to multiple escape sequences so they work correctly regardless of PuTTY's terminal type setting. See [PuTTY Setup](#putty-setup-windows) below for the full recommended configuration.
-
-### OS-aware aliases (via chezmoi templates)
+### OS-aware aliases
 
 | Alias | macOS | Linux / WSL / AWS |
-|---|---|---|
+|-------|-------|-------------------|
 | `update` | `brew update && brew upgrade` | `sudo apt update && sudo apt upgrade -y` |
-| `ls` | `ls -G` (BSD color) | `ls --color=auto` (GNU color) |
+| `ls` | `ls -G` | `ls --color=auto` |
+
+### PuTTY / SSH compatibility
+
+Emacs keymap (`bindkey -e`), multiple Home/End escape sequences, and WSL **Ctrl+V** paste via the Windows clipboard when applicable. See [PuTTY setup](#putty-setup-windows).
 
 ---
 
-## Quick Start
+## Cursor and VS Code IDE settings
 
-### One-liner (recommended)
+After every `chezmoi apply`, [`run_after_apply-cursor.sh.tmpl`](run_after_apply-cursor.sh.tmpl) copies repo settings into each editor **if** its user config directory exists. Extensions are **not** installed on apply (keeps `dotup` fast); use the sync scripts when you need them.
 
-Paste this into any terminal on a new machine — it handles everything automatically:
+### Documentation links
 
-```bash
-bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
-```
+- **Extension rationale:** [cursor/EXTENSIONS.md](cursor/EXTENSIONS.md)
+- **Extension IDs:** [cursor/extensions.txt](cursor/extensions.txt)
+- **Changelog** (when IDE files change): [CHANGELOG.md](CHANGELOG.md)
 
-The script detects macOS / Ubuntu / WSL and:
-1. Installs Homebrew (macOS only, if missing)
-2. Installs `zsh`, `git`, `fzf`, `chezmoi` via the right package manager
-3. Sets zsh as the default shell
-4. Generates `en_US.UTF-8` locale (Ubuntu — fixes prompt symbol rendering)
-5. Tries SSH auth to GitHub; falls back to HTTPS automatically
-6. Runs `chezmoi init --apply` to pull the repo and deploy everything
+### What is synced
 
-Then reload the shell:
-```bash
-exec zsh
-```
-
----
-
-### Manual step-by-step (if you prefer)
-
-#### 1. Install zsh
-
-**macOS** — already the default since Catalina.
-
-**Ubuntu / WSL / AWS:**
-```bash
-sudo apt install -y zsh
-chsh -s $(which zsh)
-# Log out and back in (or reconnect via SSH)
-```
-
-#### 2. Install chezmoi
-
-**macOS:**
-```bash
-brew install chezmoi
-```
-
-**Ubuntu / WSL / AWS:**
-```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-#### 3. Initialize and apply dotfiles
-
-```bash
-# SSH (recommended — passwordless if your key is added to GitHub):
-chezmoi init --apply git@github.com:martsamp77/marty-dotfiles.git
-
-# HTTPS (no SSH key needed):
-chezmoi init --apply https://github.com/martsamp77/marty-dotfiles.git
-```
-
-#### 4. Reload the shell
-
-```bash
-exec zsh
-```
-
-Your shell now has the Pure prompt, syntax highlighting, autosuggestions, and auto-sync on every future session.
-
----
-
-## Auto-apply on SSH Login / EC2 User-Data
-
-For a fresh server, run the install script directly or embed it in a user-data script:
-
-```bash
-bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
-```
-
-After the first apply, the auto-sync block in `.zshrc` handles all future updates automatically — every new SSH session quietly checks for changes in the background.
-
----
-
-## PuTTY Setup (Windows)
-
-These settings make PuTTY work well with this config — correct Unicode rendering, comfortable window size, readable fonts, and stable SSH sessions. Apply them to your saved session, then hit **Save** before closing.
-
-### Installing Cascadia Code
-
-The Pure prompt uses `❯` (U+276F). PuTTY does not fall back to a secondary font for missing glyphs, so the font you choose must contain that character. Cascadia Code covers it.
-
-1. Download the latest release from [github.com/microsoft/cascadia-code/releases](https://github.com/microsoft/cascadia-code/releases)
-2. Extract the zip, open the `ttf/` folder
-3. Select all `.ttf` files → right-click → **Install for all users** (puts them in `C:\Windows\Fonts` where PuTTY can always see them)
-
-### Recommended PuTTY settings
-
-#### Window → set the size of the window
-
-| Setting | Value | Why |
-|---|---|---|
-| Columns | `120` | Wider default; avoids wrapping on most commands |
-| Rows | `40` | Taller default; more context without scrolling |
-
-Changes take effect at launch. You can still drag-resize during a session.
-
-#### Window → Appearance
-
-| Setting | Value | Why |
-|---|---|---|
-| Cursor appearance | Underline | Cleaner look |
-| Cursor blinks | Enabled | Easier to locate the cursor |
-| Font | Cascadia Code Light, size 11 | Supports `❯` and all Unicode glyphs used by Pure |
-| Font quality | ClearType | Smooth anti-aliasing; improves readability without blur |
-| Gap between text and window edge | 3 px | Subtle border; less cramped feel |
-| Hide mouse pointer when typing | Enabled | Keeps the interface clean |
-
-#### Window → Translation
-
-| Setting | Value | Why |
-|---|---|---|
-| Remote character set | **UTF-8** | **Required** — fixes missing/square characters; handles all Unicode (emoji, line-drawing, `❯`) |
-| Handling of line drawing characters | Use Unicode line drawing code points | Boxes and arrows render correctly in tools like Midnight Commander |
-
-#### Window → Behaviour
-
-| Setting | Value |
-|---|---|
-| System menu appears on ALT-Space | Enabled |
-
-#### Connection
-
-| Setting | Value | Why |
-|---|---|---|
-| Seconds between keepalives | `30` | Prevents idle timeout on servers and AWS instances |
-
-#### Window → scrollback
-
-| Setting | Value | Why |
-|---|---|---|
-| Scrollback lines | `20000` | Enough history to review long build outputs without loss |
-
-#### Session → Logging *(optional)*
-
-Enable **All session output** and set a path like:
-
-```
-C:\PuTTYLogs\&H_&Y&M&D.log
-```
-
-`&H` expands to the hostname, `&Y&M&D` to the date — each session gets its own timestamped log file automatically.
-
----
-
-## Daily Workflow
-
-| Task | Command |
-|---|---|
-| Edit a dotfile | `dotedit ~/.zshrc` |
-| Preview pending changes | `dotdiff` |
-| Apply locally | `dotapply` |
-| Pull from GitHub + apply | `dotup` |
-| Upgrade tools (Cursor, VS Code, git, chezmoi, zsh, fzf) | `dottools` |
-| cd to source directory | `dots` |
-| Commit and push a change | `dots && git add . && git commit -m "..." && git push` |
-
-### Windows PowerShell (native)
-
-PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "windows"`). WSL Ubuntu still uses zsh from `install.sh`.
-
-| Task | Command |
-|---|---|
-| Bootstrap on a new PC | `irm` + `iex` on [`install-powershell.ps1`](install-powershell.ps1) (see script header for one-liner) |
-| Pull from GitHub + apply (same idea as zsh `dotup`) | `dotup` |
-| Show saved PS preferences (`[data.ps]` in chezmoi config) | `dotps show` |
-| Re-run interactive preferences | `dotps wizard` |
-| Turn off Starship + prediction (keeps chezmoi managing the profile) | `undotps` or `dotps off` |
-| Remove `[data.ps]` + backup config; then run `chezmoi init` to re-prompt | `dotps reset` |
-| Upgrade pwsh, chezmoi, Starship, Cursor, VS Code (winget) | `dottools` |
-
-Preferences are stored in **`%USERPROFILE%\.config\chezmoi\chezmoi.toml`** under `[data.ps]` (`starship`, `prediction`, `predictionview`). On first `chezmoi init` on Windows, `.chezmoi.toml.tmpl` prompts once (Starship yes/no, PSReadLine prediction source and view). macOS/Linux clones get defaults only and never receive the PowerShell profile files.
-
-If you already had a hand-edited `chezmoi.toml` without a template, after pulling this repo run **`chezmoi init`** once so `.chezmoi.toml.tmpl` can merge; if you customized `chezmoi.toml` heavily, back it up first and merge any extra sections manually.
-
-The standalone script [`install-starship.ps1`](install-starship.ps1) is still available for Starship-only setup; the chezmoi path above replaces ad-hoc profile edits for day-to-day use.
-
----
-
-## Adding a New Dotfile
-
-```bash
-# Tell chezmoi to track it
-chezmoi add ~/.gitconfig
-
-# Edit via chezmoi (so edits go to the source, not the live file)
-dotedit ~/.gitconfig
-
-# Preview
-dotdiff
-
-# Apply locally
-dotapply
-
-# Push to GitHub so all other machines get it on next shell open
-dots && git add . && git commit -m "Add .gitconfig" && git push
-```
-
----
-
-## Cursor and VS Code IDE Settings
-
-Cursor and VS Code settings are synced across machines by the `run_after_apply-cursor.sh.tmpl` script, which runs automatically after every `chezmoi apply`. It deploys settings, keybindings, and snippets to each IDE if its settings directory exists. Extensions are not installed on apply (keeps `dotup` fast); use `./scripts/cursor-sync-extensions.sh` or `./scripts/vscode-sync-extensions.sh` when needed.
-
-### What's synced
-
-| File | Description |
-|---|---|
+| File | Role |
+|------|------|
 | `cursor/settings.json` | Editor preferences, theme, Peacock colors |
-| `keybindings.json` | Generated inline with OS-aware workspace path |
-| `cursor/extensions.txt` | Extension manifest — installed on missing machines |
-| `cursor/snippets/*.code-snippets` | Custom snippets (if any) |
-| `cursor/mcp.json` | Global MCP server config (if present) |
-| `cursor/user-rules.md` | In repo for version control; use import/export scripts to sync with state.vscdb (not auto-deployed) |
-| `cursor/EXTENSIONS.md` | Documentation of all approved extensions and why each is included |
+| `keybindings.json` | Generated inline in the run script (OS-aware workspace path) |
+| `cursor/extensions.txt` | Manifest for sync scripts |
+| `cursor/snippets/*.code-snippets` | Custom snippets |
+| `cursor/mcp.json` | Global MCP config when present |
+| `cursor/user-rules.md` | Version-controlled rules; use import/export scripts (not auto-deployed to DB) |
 
 ### Settings paths by OS
 
-| IDE | Windows (via WSL) | macOS | Linux |
-|-----|-------------------|-------|-------|
+| IDE | Windows | macOS | Linux |
+|-----|---------|-------|-------|
 | Cursor | `%APPDATA%\Cursor\User\` | `~/Library/Application Support/Cursor/User/` | `~/.config/Cursor/User/` |
 | VS Code | `%APPDATA%\Code\User\` | `~/Library/Application Support/Code/User/` | `~/.config/Code/User/` |
 
-### Cursor Extensions
+### Extension directories (Cursor)
 
-#### Where extensions are stored
+| OS | Location |
+|----|----------|
+| Windows | `%USERPROFILE%\.cursor\extensions\` |
+| macOS | `~/Library/Application Support/Cursor/extensions/` |
+| Linux | `~/.cursor/extensions/` |
+| WSL (Cursor on Windows) | Windows path above |
 
-Cursor installs extensions to an OS-specific directory. Cursor tracks what's installed in an `extensions.json` file inside that directory (do not edit it).
+### Updating `cursor/extensions.txt`
 
-| OS | Extensions directory |
-|---|---|
-| **Windows** | `%USERPROFILE%\.cursor\extensions\` (e.g. `C:\Users\You\.cursor\extensions\`) |
-| **macOS** | `~/Library/Application Support/Cursor/extensions/` |
-| **Linux** | `~/.cursor/extensions/` |
-| **WSL** (Cursor on Windows) | `%USERPROFILE%\.cursor\extensions\` (Windows path; Cursor runs on the Windows side) |
-
-Each extension lives in its own folder: `{publisher}.{name}-{version}-{platform}` (e.g. `eamodio.gitlens-17.11.1-universal`).
-
-#### What `cursor/extensions.txt` is
-
-`cursor/extensions.txt` is a **manifest file** you maintain in this repo. Cursor does not read it automatically. It is used to:
-
-1. Document which extensions you want installed
-2. Install them on new machines or after a reset (via the sync scripts or manual commands)
-
-Lines starting with `#` are comments and are ignored when installing. For a description of each approved extension and when to add or remove it, see [cursor/EXTENSIONS.md](cursor/EXTENSIONS.md).
-
-#### Updating the manifest manually
-
-1. Open `cursor/extensions.txt` in an editor.
-2. Add or remove extension IDs, one per line (e.g. `esbenp.prettier-vscode`).
-3. To see what's currently installed on your machine:
-   ```powershell
-   # Windows PowerShell
-   cursor --list-extensions
-   ```
-   ```bash
-   # macOS / Linux / WSL
-   cursor --list-extensions
-   # On WSL, use cursor.exe if cursor is not in PATH
-   cursor.exe --list-extensions
-   ```
-4. To overwrite the manifest with your current install (backs up any custom comments/structure):
-   ```powershell
-   # Windows PowerShell (from repo root)
-   cursor --list-extensions > cursor\extensions.txt
-   ```
-   ```bash
-   # macOS / Linux / WSL (from repo root)
-   cursor --list-extensions > cursor/extensions.txt
-   # On WSL: cursor.exe --list-extensions > cursor/extensions.txt
-   ```
-
-#### Installing extensions from the manifest
-
-**Option A: Sync scripts** — Run `./scripts/cursor-sync-extensions.sh` or `./scripts/vscode-sync-extensions.sh` to install missing extensions from `cursor/extensions.txt` (VS Code skips `anysphere.*`).
-
-**Option B: Manual install** — Use these commands when you want to install extensions directly.
+1. Edit the manifest, or dump from the CLI: `cursor --list-extensions > cursor/extensions.txt` (comments in the file may be lost if you overwrite blindly).
+2. Install missing extensions: `./scripts/cursor-sync-extensions.sh` or the PowerShell one-liner in the manifest header.
 
 **Windows PowerShell** (from repo root):
 
 ```powershell
-cd c:\Workspace\marty-dotfiles
 Get-Content cursor\extensions.txt | Where-Object { $_ -notmatch '^#' -and $_ -match '\S' } | ForEach-Object { cursor --install-extension $_ }
 ```
 
-**macOS / Linux / WSL** (from repo root):
+**macOS / Linux / WSL:**
 
 ```bash
-cd ~/path/to/marty-dotfiles
 grep -v '^#' cursor/extensions.txt | grep -v '^[[:space:]]*$' | while read -r ext; do
   cursor --install-extension "$ext"
 done
-# On WSL, use cursor.exe instead of cursor if needed
 ```
 
-Extensions that are already installed are left unchanged; only missing ones are installed.
+VS Code (same list, skips `anysphere.*`): `./scripts/vscode-sync-extensions.sh`
 
-#### Syncing extensions interactively
-
-To compare installed extensions with the manifest and decide what to remove or add:
+### User rules (SQLite)
 
 ```bash
-./scripts/cursor-sync-extensions.sh
+./scripts/cursor-export-rules.sh   # → cursor/user-rules.md
+./scripts/cursor-import-rules.sh   # import on a new machine (close Cursor first)
 ```
 
-The script shows:
-- **Orphans** — installed but not in the manifest. For each: choose Remove (uninstall), Add to list (append to `extensions.txt`), or Skip.
-- **Missing** — in the manifest but not installed. Choose whether to install them.
+Requires `sqlite3` and `xxd` where noted in the scripts.
 
-Run from the repo root or anywhere; it uses `chezmoi source-path` or the script location to find the manifest.
+### Tool upgrades
 
-For VS Code (same manifest, `anysphere.*` excluded):
-
-```bash
-./scripts/vscode-sync-extensions.sh
-```
-
-### Tool upgrades (dottools)
-
-Run `dottools` to upgrade Cursor, VS Code, git, chezmoi, zsh, and fzf when installed. Per-platform: Homebrew on macOS, apt on Linux/WSL, winget for Windows IDEs on WSL. Kept separate from `dotup` so dotup stays fast.
-
-### User Rules (manual sync)
-
-Cursor stores User Rules in a SQLite database (`state.vscdb`), not a plain text file. Two helper scripts handle export and import:
-
-```bash
-# Export rules from the current machine to cursor/user-rules.md
-./scripts/cursor-export-rules.sh
-
-# Import rules on a new machine (close Cursor first!)
-./scripts/cursor-import-rules.sh
-```
-
-Run from the chezmoi source dir (e.g. `dots` then `./scripts/cursor-export-rules.sh`) or ensure `chezmoi` is in PATH so the scripts can resolve the source path.
-
-The import script backs up `state.vscdb` before writing. User Rules are not deployed automatically by `chezmoi apply` because modifying the SQLite database while Cursor is running can corrupt it. Requires `sqlite3` and `xxd` (Ubuntu: `sudo apt install sqlite3 xxd`).
-
-### Adding a new Cursor setting
-
-1. Edit `cursor/settings.json` in the repo (or change it in Cursor and copy it back)
-2. For keybindings, edit the heredoc in `run_after_apply-cursor.sh.tmpl`
-3. Push to GitHub — other machines pick it up on next `chezmoi update`
+`dottools` upgrades Cursor, VS Code, git, chezmoi, zsh, and fzf when installed — intentionally separate from `dotup`.
 
 ---
 
-## API Keys and Local Secrets
+## Adding a new dotfile
 
-API keys and other secrets are stored in `~/.zshrc.local` on each machine — a file that is **never tracked by chezmoi and never pushed to GitHub**.
+```bash
+chezmoi add ~/.gitconfig
+dotedit ~/.gitconfig
+dotdiff
+dotapply
+dots && git add . && git commit -m "Add .gitconfig" && git push
+```
 
-`.zshrc` sources it automatically if it exists:
+Remember to update [CHANGELOG.md](CHANGELOG.md) for meaningful changes (and enable the [git hook](#maintaining-this-repository) if you use it).
+
+---
+
+## Windows PowerShell (native)
+
+PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "windows"`). Preferences live in **`%USERPROFILE%\.config\chezmoi\chezmoi.toml`** under `[data.ps]` (`starship`, `prediction`, `predictionview`). First `chezmoi init` on Windows runs prompts from `.chezmoi.toml.tmpl`.
+
+| Task | Command |
+|------|---------|
+| Bootstrap a new PC | [`install-powershell.ps1`](install-powershell.ps1) one-liner in script header |
+| Pull + apply | `dotup` |
+| Inspect `[data.ps]` | `dotps show` |
+| Re-run prompts | `dotps wizard` |
+| Disable Starship + prediction | `undotps` or `dotps off` |
+| Reset `[data.ps]` | `dotps reset` |
+| Upgrade pwsh, chezmoi, Starship, Cursor, VS Code | `dottools` |
+
+If you merge `.chezmoi.toml.tmpl` into an existing `chezmoi.toml`, back up first. [`install-starship.ps1`](install-starship.ps1) remains available for Starship-only installs.
+
+---
+
+## Auto-apply on SSH login / EC2 user-data
+
+```bash
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
+```
+
+After the first apply, background auto-sync in `.zshrc` can pull future updates when you open a shell.
+
+---
+
+## PuTTY setup (Windows)
+
+Pure uses `❯` (U+276F). PuTTY needs a font that includes it — **Cascadia Code** from [microsoft/cascadia-code/releases](https://github.com/microsoft/cascadia-code/releases) (install from `ttf/` for all users).
+
+### Suggested settings
+
+**Window → size:** Columns `120`, Rows `40`.
+
+**Appearance:** Underline cursor, blink on, **Cascadia Code Light** 11, ClearType, 3 px text gap, hide pointer when typing.
+
+**Translation:** Remote character set **UTF-8**; Unicode line drawing.
+
+**Connection:** Seconds between keepalives `30`.
+
+**Scrollback:** `20000` lines.
+
+**Session → Logging (optional):** e.g. `C:\PuTTYLogs\&H_&Y&M&D.log`
+
+---
+
+## API keys and local secrets
+
+Never commit secrets. Use **`~/.zshrc.local`** per machine (not managed by chezmoi):
 
 ```bash
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 ```
 
-On any new machine, create the file manually after running `chezmoi apply`:
+Create after apply as needed:
 
 ```bash
 cat >> ~/.zshrc.local << 'EOF'
-export MEM0_API_KEY="sk-..."
-export OPENAI_API_KEY="sk-..."
+export MEM0_API_KEY="sk-…"
+export OPENAI_API_KEY="sk-…"
 EOF
 ```
-
-Each machine can have different keys or none at all — on machines without the file the shell starts cleanly with no errors. Never run `chezmoi add ~/.zshrc.local`; keep it local only.
 
 ---
 
 ## Templates
 
-chezmoi evaluates Go template syntax inside any source file. Use this for per-machine or per-OS differences:
+chezmoi evaluates Go templates in `.tmpl` sources:
 
 ```
-# OS branch
 {{ if eq .chezmoi.os "darwin" }}
-# macOS-only config
+# macOS-only
 {{ else if eq .chezmoi.os "linux" }}
-# Linux-only config
+# Linux-only
 {{ end }}
 
-# Hostname branch
 {{ if eq .chezmoi.hostname "work-laptop" }}
 export WORK_PROXY=http://proxy.corp:3128
 {{ end }}
@@ -594,81 +459,73 @@ export WORK_PROXY=http://proxy.corp:3128
 
 ## Troubleshooting
 
-**`chezmoi update` fails with merge conflict / prompt hasn't changed after an update**
+**`chezmoi update` fails with merge conflict / stuck rebase**
 
-This happens when a previous `chezmoi update` was interrupted by a rebase conflict and left the source repo in a paused state. Every subsequent `chezmoi update` will fail with "Pulling is not possible because you have unmerged files." Fix:
 ```bash
-chezmoi cd              # cd into ~/.local/share/chezmoi
-git status              # confirm you are mid-rebase
-git rebase --abort      # discard the stuck rebase
-chezmoi update          # clean pull + apply from GitHub
-exec zsh                # reload the shell with the new config
+chezmoi cd
+git status
+git rebase --abort
+chezmoi update
+exec zsh
 ```
 
-**Prompt still showing old style / aliases like `dotup` not found**
+**Prompt / aliases not updated**
 
-The new `~/.zshrc` has not been applied yet. Either a merge conflict (see above) or `chezmoi apply` has not been run since initialization. Run:
 ```bash
 chezmoi apply
 exec zsh
 ```
 
-**Plugins not loading**
+**Plugins missing under `~/.zsh/`**
 
-Plugins are managed by chezmoi externals (`.chezmoiexternal.toml`). If `~/.zsh/` is empty, run:
 ```bash
 chezmoi apply --refresh-externals
 ```
-This forces chezmoi to re-clone all three plugin repos (`pure`, `zsh-autosuggestions`, `zsh-syntax-highlighting`) into `~/.zsh/`.
 
-**Auto-sync not running**
+**Auto-sync never runs**
 
-The sync block checks for `~/.local/share/chezmoi/.git`. If chezmoi wasn't initialized with `--apply`, that directory may not exist:
-```bash
-chezmoi init git@github.com:martsamp77/marty-dotfiles.git
-chezmoi apply
-```
+Ensure chezmoi was initialized with apply and `~/.local/share/chezmoi/.git` exists.
 
-**chezmoi command not found**
+**`chezmoi` not in PATH (Linux)**
 
-chezmoi is installed to `~/.local/bin`. Make sure it's in your PATH:
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
-which chezmoi
 ```
 
 **Diagnostics**
+
 ```bash
-chezmoi doctor          # Check for common issues
-chezmoi diff            # See what would change
-chezmoi apply --dry-run # Apply without writing anything
+chezmoi doctor
+chezmoi diff
+chezmoi apply --dry-run
 ```
 
-**SSH key not accepted by GitHub**
+**SSH to GitHub**
+
 ```bash
-ssh -T git@github.com   # Should print: Hi martsamp77! ...
+ssh -T git@github.com
 ```
 
-**Prompt colors look wrong**
+**Prompt colors wrong on light themes / PuTTY**
 
-The prompt uses bright ANSI colors (`%F{10}` = bright green, `%F{14}` = bright cyan). These look best on dark/black backgrounds. In PuTTY: Connection → Data → Terminal-type string should be `xterm-256color`.
+Pure and legacy colors target **dark** backgrounds. PuTTY: Connection → Data → Terminal-type string `xterm-256color`.
 
-**`dircolors` not found (macOS)**
+**`dircolors` on macOS**
 
-This is expected and handled — the `dircolors` call is guarded with `command -v dircolors`. On macOS, `ls` uses its own `-G` flag for color instead.
+Expected: the config guards with `command -v dircolors`.
 
 ---
 
 ## Why chezmoi?
 
-- **No symlinks** — copies files; no accidental source corruption
-- **Templates** — one file, multiple machines, OS-aware output
-- **Git-native** — history, branches, remotes all work as expected
-- **Encrypted secrets** — supports age/GPG for sensitive values
-- **Single binary** — `curl | sh` install, no runtime deps
-- **Idempotent** — running `chezmoi apply` twice is always safe
+- No symlink fragility
+- OS- and host-aware templates
+- Git workflow and history
+- Optional encryption for secrets (age/GPG)
+- Single static binary
+- Repeatable, idempotent applies
 
 ---
 
-*Fork, steal, adapt — happy terminal-ing.*
+*Fork, steal, adapt — happy terminal-ing.*  
 *— Marty (Birmingham, AL)*

@@ -1,5 +1,5 @@
 # Cursor Extensions Manifest
-# See README "Cursor Extensions" section and cursor/EXTENSIONS.md for full documentation.
+# See README "Cursor and VS Code IDE settings" and cursor/EXTENSIONS.md for full documentation.
 #
 # List installed:  cursor --list-extensions
 # Curated for:    Python + Django/Jinja, Node/React/TS (Prettier + ESLint + Tailwind + Vite),
