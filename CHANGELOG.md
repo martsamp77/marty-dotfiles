@@ -11,6 +11,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.1] — 2026-03-20
+
+### Changed
+- **zsh-autosuggestions** — Strategy is now `(history completion)` instead of completion-first (avoids nonsense one-character completion guesses). Added `ZSH_AUTOSUGGEST_COMPLETION_IGNORE` for 0–2 character buffers, `ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20` for large pastes, and `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'` so ghost text is distinct from syntax-highlighted comments (`fg=8`) and default foreground.
+- **`DOTFILES_VERSION`** — `1.6.1` in `dot_zshrc.tmpl`.
+- **README** — zsh-autosuggestions section updated to match the new strategy and highlight style.
+
 ## [1.6.0] — 2026-03-20
 
 ### Added

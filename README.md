@@ -139,9 +139,9 @@ Color overrides for dark backgrounds are applied via `zstyle`:
 
 ### zsh-autosuggestions
 
-[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text command suggestions as you type, drawn from your command history — identical to the Fish shell experience.
+[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) shows ghost-text command suggestions as you type. The dotfiles use **history first**, then **completion** as a fallback (with completion disabled for very short buffers), so suggestions stay predictable rather than mirroring arbitrary tab-completion order.
 
-- As you type, a greyed-out suggestion appears to the right of your cursor
+- As you type, a dim gray *italic* suggestion appears to the right of your cursor (styled to read differently from both normal text and `#` comments)
 - Press **→** (right arrow) or **End** to accept the full suggestion
 - Press **Ctrl+→** to accept one word at a time
 - Completely non-intrusive — keep typing to ignore it

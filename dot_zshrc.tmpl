@@ -302,11 +302,21 @@ ZSH_HIGHLIGHT_STYLES[comment]='fg=8'                   # # comments — dark gre
 ZSH_HIGHLIGHT_STYLES[assign]='fg=white'                # VAR=value
 ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=51'        # !350, !! etc.
 
-# Fish-shell-style ghost-text suggestions drawn from command history.
+# Fish-shell-style ghost-text suggestions as you type (zsh-autosuggestions).
 # Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
-# Completion-first: suggests from current context (e.g. files in cwd) before history.
-ZSH_AUTOSUGGEST_STRATEGY=(completion history)
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
+#
+# Strategy: history first, then completion as a fallback. Putting completion
+# first makes one-letter prefixes pull the *first* tab-completion (often nonsense).
+# ZSH_AUTOSUGGEST_COMPLETION_IGNORE skips completion entirely for 0–2 character
+# buffers so you do not get filesystem/command noise until you have typed more.
+#
+# Highlight: must differ from syntax-highlighted comments (also fg=8 below) and
+# from default foreground — 241 is a mid gray on 256-color terminals; italic
+# reads as “hint” (falls back to gray-only on terminals without italic).
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_COMPLETION_IGNORE='(#s)(|?|??)(#e)'
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'
 [[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
     source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
@@ -375,4 +385,4 @@ print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
 #   MAJOR — incompatible structural change (new bootstrap dependency, etc.)
 #   MINOR — new feature or significant improvement
 #   PATCH — bug fix, comment correction, cosmetic tweak
-export DOTFILES_VERSION="1.6.0"
+export DOTFILES_VERSION="1.6.1"
