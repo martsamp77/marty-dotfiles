@@ -1,132 +1,104 @@
-# Cursor Extensions — Approved List
+# Cursor Extensions — Recommended set
 
-This document describes every extension in `cursor/extensions.txt`, why it's included, and when you might remove it.
+This list is **curated for Marty’s workflows** as reflected in `cursor/settings.json` and this dotfiles repo: Python (Black, Ruff, Django, Jinja), Node/React/TypeScript (Prettier, ESLint, Tailwind, Vite-style nesting), remote development (WSL, SSH, Containers), Terraform, GitHub Actions, NetSuite tooling when needed, and Windows-friendly extras (PowerShell, `win-ca`, PDF/Office viewers).
 
-**Note:** Extensions starting with `anysphere.` (e.g. `anysphere.cursorpyright`, `anysphere.remote-wsl`) are Cursor-only and are skipped when syncing to VS Code.
+The canonical ID list is **`cursor/extensions.txt`**. After changing the manifest, install missing extensions with `./scripts/cursor-sync-extensions.sh` or the PowerShell/bash one-liners in that file’s header.
 
----
+**Note:** Extensions starting with `anysphere.` are Cursor-specific and are skipped when syncing the same manifest to VS Code via `vscode-sync-extensions.sh`.
 
-## Required (guidelines + settings)
+## Core (aligned with settings)
 
-
-| Extension                     | Purpose                                                                                                                                                                                   |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **EditorConfig.EditorConfig** | Enforces consistent editor settings (indent, line endings, charset) across projects via `.editorconfig`. Ensures everyone uses the same style regardless of their personal Cursor config. |
-| **esbenp.prettier-vscode**    | Code formatter for JavaScript, TypeScript, HTML, CSS, JSON, Markdown. Industry standard; formats on save when configured.                                                                 |
-| **dbaeumer.vscode-eslint**    | Lints and auto-fixes JavaScript/TypeScript. Catches bugs, enforces style, integrates with Prettier.                                                                                       |
-| **bradlc.vscode-tailwindcss** | IntelliSense, syntax highlighting, and class-name completion for Tailwind CSS. Essential for Tailwind projects.                                                                           |
-| **ms-python.black-formatter** | Python formatter. Opinionated, no-config. Keeps Python code consistent.                                                                                                                   |
-
-
----
+| Extension ID | Why |
+|--------------|-----|
+| **EditorConfig.EditorConfig** | Honors `.editorconfig` across repos and teams. |
+| **esbenp.prettier-vscode** | Matches `editor.defaultFormatter`. |
+| **dbaeumer.vscode-eslint** | Matches `editor.codeActionsOnSave` → `source.fixAll.eslint`. |
+| **bradlc.vscode-tailwindcss** | Tailwind IntelliSense; pairs with explorer nesting for `tailwind.config.*`. |
+| **ms-python.black-formatter** | Matches `[python].editor.defaultFormatter`. |
+| **johnpapa.vscode-peacock** | Workspace colors; `peacock.favoriteColors` is already in settings. |
 
 ## Python
 
-
-| Extension                                   | Purpose                                                                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **anysphere.cursorpyright**                 | Cursor's Pyright integration. Type checking for Python. Required for Cursor's Python AI features and static analysis.     |
-| **ms-python.python**                        | Official Microsoft Python extension. Base support: run/debug, environments, testing.                                      |
-| **ms-python.vscode-pylance**                | Fast Python language server. IntelliSense, go-to-definition, type hints, import resolution.                               |
-| **ms-python.debugpy**                       | Python debugger. Breakpoints, step-through, variable inspection. Usually installed with the Python extension.             |
-| **njpwerner.autodocstring**                 | Auto-generates docstrings (Google, NumPy, Sphinx styles) for functions and classes. Saves time and keeps docs consistent. |
-| **donjayamanne.python-environment-manager** | Manages venv, conda, pyenv from the UI. Switch interpreters easily. Remove if you only use one environment.               |
-
-
----
+| Extension ID | Why |
+|--------------|-----|
+| **anysphere.cursorpyright** | Cursor’s Pyright integration for Python. |
+| **ms-python.python** | Core Python support. |
+| **ms-python.vscode-pylance** | Language server / IntelliSense. |
+| **ms-python.debugpy** | Debugger. |
+| **njpwerner.autodocstring** | Docstring generation. |
+| **donjayamanne.python-environment-manager** | Interpreter / venv management. |
+| **charliermarsh.ruff** | Fast lint/format; complements Black. |
+| **kevinrose.vsc-python-indent** | Better indent inside Python blocks. |
+| **batisteo.vscode-django** | Django templates and project affordances. |
+| **wholroyd.jinja** | Jinja2 syntax for templates. |
 
 ## Remote / WSL
 
+| Extension ID | Why |
+|--------------|-----|
+| **anysphere.remote-wsl** | Cursor’s WSL integration (Windows ↔ Linux). |
+| **ms-vscode-remote.remote-ssh** | Remote folders over SSH. |
+| **ms-vscode-remote.remote-ssh-edit** | Edit `~/.ssh/config` in the editor. |
+| **ms-vscode-remote.remote-containers** | Dev Containers. |
+| **ms-vscode.remote-explorer** | Browse SSH/WSL/remote targets. |
+| **ms-vscode.remote-server** | Remote server workflows. |
 
-| Extension                              | Purpose                                                                                                            |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **anysphere.remote-wsl**               | Cursor's WSL integration. Open folders in WSL from Windows Cursor. Essential for WSL workflows.                    |
-| **ms-vscode-remote.remote-ssh**        | Connect to remote machines via SSH. Edit files on servers, VMs, or other computers.                                |
-| **ms-vscode-remote.remote-ssh-edit**   | Edit SSH config (`~/.ssh/config`) from within Cursor. Convenience for managing hosts.                              |
-| **ms-vscode-remote.remote-containers** | Dev Containers — develop inside a Docker container. Reproducible environments. Remove if you don't use containers. |
-| **ms-vscode.remote-explorer**          | UI for viewing and managing remote connections (SSH, WSL, containers).                                             |
-| **ms-vscode.remote-server**            | Remote server management. Part of the remote development workflow.                                                 |
+## Web / React / TS
 
+| Extension ID | Why |
+|--------------|-----|
+| **usernamehw.errorlens** | Inline diagnostics; fewer trips to the Problems panel. |
+| **formulahendry.auto-rename-tag** | Paired JSX/HTML tag rename. |
+| **dsznajder.es7-react-js-snippets** | React snippets; matches TSX nesting patterns in settings. |
+| **mikestead.dotenv** | Highlights and tooling for `.env`; pairs with `.env` file nesting. |
+| **christian-kohler.path-intellisense** | Autocomplete for file paths in imports. |
 
----
+## Infra & CI
 
-## Recommended for MD stack
+| Extension ID | Why |
+|--------------|-----|
+| **hashicorp.terraform** | Formatting, navigation, and validation for Terraform. |
+| **github.vscode-github-actions** | Workflow syntax and local editing for Actions YAML. |
 
+## NetSuite
 
-| Extension                              | Purpose                                                                                          |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **usernamehw.errorlens**               | Inline display of errors and warnings at the cursor. No need to open the Problems panel.         |
-| **formulahendry.auto-rename-tag**      | Renames paired HTML/JSX tags when you edit one. Prevents broken markup.                          |
-| **dsznajder.es7-react-js-snippets**    | Snippets for React, Redux, ES6+. Speeds up component creation.                                   |
-| **charliermarsh.ruff**                 | Fast Python linter (replaces Flake8, isort, etc.). Linting without the slowdown.                 |
-| **hashicorp.terraform**                | Syntax, validation, and formatting for Terraform (`.tf`). Remove if you don't use infra-as-code. |
-| **mikestead.dotenv**                   | Syntax highlighting and validation for `.env` files.                                             |
-| **christian-kohler.path-intellisense** | Path autocomplete for imports and file references.                                               |
-| **github.vscode-github-actions**       | Edit and validate GitHub Actions workflows (`.yml`).                                             |
+| Extension ID | Why |
+|--------------|-----|
+| **ericbirdsall.SuiteSnippets** | SuiteScript-oriented snippets. |
+| **nsupload-org.netsuite-upload** | Upload/deploy helpers for NetSuite projects. |
 
+## Tauri / Rust
 
----
+| Extension ID | Why |
+|--------------|-----|
+| **rust-lang.rust-analyzer** | Rust language support. |
+| **tauri-apps.tauri-vscode** | Tauri config and tooling. |
 
-## NetSuite (if you do SuiteScript)
+## Prisma
 
+| Extension ID | Why |
+|--------------|-----|
+| **Prisma.prisma** | Schema formatting, syntax, and Prisma Client hints. |
 
-| Extension                        | Purpose                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| **ericbirdsall.SuiteSnippets**   | Snippets for NetSuite SuiteScript 1.0 and 2.0.                                 |
-| **nsupload-org.netsuite-upload** | Upload/deploy SuiteScript files to NetSuite. Remove if you don't use NetSuite. |
+## Optional quality-of-life
 
+| Extension ID | Why |
+|--------------|-----|
+| **yzhang.markdown-all-in-one** | TOC, lists, and shortcuts for Markdown. |
+| **aaron-bond.better-comments** | Highlight TODOs and comment tags. |
+| **streetsidesoftware.code-spell-checker** | Catch typos in comments and docs. |
+| **rangav.vscode-thunder-client** | REST client in the editor. |
+| **ms-playwright.playwright** | Run/debug Playwright tests. |
+| **mechatroner.rainbow-csv** | CSV column colors. |
+| **ms-vscode.powershell** | Matches integrated default profile **PowerShell** in settings. |
+| **cweijan.vscode-office** | Preview common Office formats. |
+| **eamodio.gitlens** | Blame, history, and richer Git UX. |
+| **ukoloff.win-ca** | Trust Windows enterprise CAs (helpful on locked-down networks). |
+| **eriklynd.json-tools** | JSON navigation and utilities. |
+| **tomoki1207.pdf** | PDF preview inside the editor. |
+| **visualstudioexptteam.vscodeintellicode** | AI-assisted completions. |
+| **visualstudioexptteam.intellicode-api-usage-examples** | API usage examples in IntelliSense. |
 
----
+**Manual edit:** Update `cursor/extensions.txt`, then `chezmoi apply` if you deploy IDE settings from this repo.
 
-## Tauri (if you do desktop apps)
-
-
-| Extension                   | Purpose                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| **rust-lang.rust-analyzer** | Rust language server. Required for Tauri (Rust backend).                                    |
-| **tauri-apps.tauri-vscode** | Tauri project support: scaffolding, commands, config. Remove if you don't build Tauri apps. |
-
-
----
-
-## Prisma (if you use Prisma for PostgreSQL)
-
-
-| Extension         | Purpose                                                                                            |
-| ----------------- | -------------------------------------------------------------------------------------------------- |
-| **Prisma.prisma** | Syntax highlighting, formatting, and validation for Prisma schema. Remove if you don't use Prisma. |
-
-
----
-
-## Optional
-
-
-| Extension                                 | Purpose                                                                                     |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **yzhang.markdown-all-in-one**            | Keyboard shortcuts, TOC, preview for Markdown.                                              |
-| **aaron-bond.better-comments**            | Colorizes TODO, FIXME, etc. in comments.                                                    |
-| **streetsidesoftware.code-spell-checker** | Spell-check in code and comments. Catches typos.                                            |
-| **rangav.vscode-thunder-client**          | REST API client inside Cursor (like Postman).                                               |
-| **ms-playwright.playwright**              | Run and debug Playwright tests. Remove if you don't use Playwright.                         |
-| **mechatroner.rainbow-csv**               | Colorizes CSV columns for readability. Nice for data work.                                  |
-| **wholroyd.jinja**                        | Jinja2 template support. Remove if you don't use Jinja2.                                    |
-| **ms-vscode.powershell**                  | PowerShell support. Keep if you use PowerShell.                                             |
-| **cweijan.vscode-office**                 | View Word, Excel, PowerPoint in Cursor.                                                     |
-| **eamodio.gitlens**                       | Git blame, history, and diffs inline.                                                       |
-| **johnpapa.vscode-peacock**               | Color workspace folders. Distinguish projects at a glance.                                  |
-| **ukoloff.win-ca**                        | Uses Windows CA store for Node.js SSL. Fixes cert issues on Windows. Remove on macOS/Linux. |
-| **batisteo.vscode-django**                | Django support. Remove if you don't use Django.                                             |
-| **tomoki1207.pdf**                        | View PDFs in Cursor. Remove if you rarely need it.                                          |
-
-
----
-
-## Adding or removing extensions
-
-**Manual edit:** Edit `cursor/extensions.txt`, then run `chezmoi apply` (or `dotapply`) to sync.
-
-**Interactive sync:** Run `./scripts/cursor-sync-extensions.sh` to compare installed vs manifest. For each extension installed but not in the list, choose Remove (uninstall), Add to list, or Skip. For extensions in the list but not installed, choose whether to install them.
-
-When adding a new extension, update this document so future-you knows why it's there.
-
+**Interactive sync:** `./scripts/cursor-sync-extensions.sh` — add missing manifest entries or install what’s listed.

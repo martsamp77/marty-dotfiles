@@ -2,7 +2,9 @@
 # See README "Cursor Extensions" section and cursor/EXTENSIONS.md for full documentation.
 #
 # List installed:  cursor --list-extensions
-# Overwrite this file:  cursor --list-extensions > cursor/extensions.txt  (from repo root)
+# Curated for:    Python + Django/Jinja, Node/React/TS (Prettier + ESLint + Tailwind + Vite),
+#                 remote (WSL/SSH/Containers), Terraform + GitHub Actions, Windows/PowerShell,
+#                 NetSuite when needed, optional desktop (Tauri) and DB (Prisma).
 #
 # Install all (PowerShell, from repo root):
 #   Get-Content cursor\extensions.txt | Where-Object { $_ -notmatch '^#' -and $_ -match '\S' } | ForEach-Object { cursor --install-extension $_ }
@@ -12,12 +14,13 @@
 #
 # Lines starting with # are comments and ignored during sync.
 #
-# ─── Required (guidelines + settings) ───────────────────────────────────────
+# ─── Core (matches cursor/settings.json) ─────────────────────────────────────
 EditorConfig.EditorConfig
 esbenp.prettier-vscode
 dbaeumer.vscode-eslint
 bradlc.vscode-tailwindcss
 ms-python.black-formatter
+johnpapa.vscode-peacock
 #
 # ─── Python ──────────────────────────────────────────────────────────────────
 anysphere.cursorpyright
@@ -26,6 +29,10 @@ ms-python.vscode-pylance
 ms-python.debugpy
 njpwerner.autodocstring
 donjayamanne.python-environment-manager
+charliermarsh.ruff
+kevinrose.vsc-python-indent
+batisteo.vscode-django
+wholroyd.jinja
 #
 # ─── Remote / WSL ────────────────────────────────────────────────────────────
 anysphere.remote-wsl
@@ -35,14 +42,15 @@ ms-vscode-remote.remote-containers
 ms-vscode.remote-explorer
 ms-vscode.remote-server
 #
-# ─── Recommended for MD stack ───────────────────────────────────────────────
+# ─── Web / React / TS ───────────────────────────────────────────────────────
 usernamehw.errorlens
 formulahendry.auto-rename-tag
 dsznajder.es7-react-js-snippets
-charliermarsh.ruff
-hashicorp.terraform
 mikestead.dotenv
 christian-kohler.path-intellisense
+#
+# ─── Infra & CI ──────────────────────────────────────────────────────────────
+hashicorp.terraform
 github.vscode-github-actions
 #
 # ─── NetSuite (if you do SuiteScript) ─────────────────────────────────────────
@@ -53,21 +61,22 @@ nsupload-org.netsuite-upload
 rust-lang.rust-analyzer
 tauri-apps.tauri-vscode
 #
-# ─── Prisma (if you use Prisma for PostgreSQL) ──────────────────────────────
+# ─── Prisma ──────────────────────────────────────────────────────────────────
 Prisma.prisma
 #
-# ─── Optional ────────────────────────────────────────────────────────────────
+# ─── Optional quality-of-life ────────────────────────────────────────────────
 yzhang.markdown-all-in-one
 aaron-bond.better-comments
 streetsidesoftware.code-spell-checker
 rangav.vscode-thunder-client
 ms-playwright.playwright
 mechatroner.rainbow-csv
-wholroyd.jinja
 ms-vscode.powershell
 cweijan.vscode-office
 eamodio.gitlens
-johnpapa.vscode-peacock
+
 ukoloff.win-ca
-batisteo.vscode-django
+eriklynd.json-tools
 tomoki1207.pdf
+visualstudioexptteam.vscodeintellicode
+visualstudioexptteam.intellicode-api-usage-examples
