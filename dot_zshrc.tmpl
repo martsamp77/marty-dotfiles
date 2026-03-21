@@ -216,6 +216,18 @@ fi
 
 # ─────────────────────────────────────────────────── ALIASES ───────────────
 
+# ── OS-aware ────────────────────────────────────────────────────────────────
+# chezmoi evaluates these template blocks at apply time.  The deployed
+# ~/.zshrc contains only the branch that matches the current machine's OS.
+# alias ls before cd() — zsh resolves aliases in function bodies at definition time.
+{{ if eq .chezmoi.os "darwin" }}
+alias update='brew update && brew upgrade'
+alias ls='ls -G'                            # macOS built-in color ls
+{{ else }}
+alias update='sudo apt update && sudo apt upgrade -y'
+alias ls='ls --color=auto'                  # GNU coreutils color ls
+{{ end }}
+
 alias ll='ls -lah'
 alias grep='grep --color=auto'
 alias ..='cd ..'
@@ -227,17 +239,6 @@ alias history-stats="fc -l 1 | awk '{CMD[\$2]++;count++;} END { for (a in CMD) p
 
 # cd always shows the directory contents — saves a separate `ls` after every cd
 cd() { builtin cd "$@" && ls; }
-
-# ── OS-aware ────────────────────────────────────────────────────────────────
-# chezmoi evaluates these template blocks at apply time.  The deployed
-# ~/.zshrc contains only the branch that matches the current machine's OS.
-{{ if eq .chezmoi.os "darwin" }}
-alias update='brew update && brew upgrade'
-alias ls='ls -G'                            # macOS built-in color ls
-{{ else }}
-alias update='sudo apt update && sudo apt upgrade -y'
-alias ls='ls --color=auto'                  # GNU coreutils color ls
-{{ end }}
 
 # ── Dotfile management shortcuts ────────────────────────────────────────────
 # These wrap chezmoi commands so you never have to remember the full syntax.
