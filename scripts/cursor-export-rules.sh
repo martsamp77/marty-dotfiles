@@ -31,6 +31,14 @@ case "$OS" in
             DB_PATH="$HOME/.config/Cursor/User/globalStorage/state.vscdb"
         fi
         ;;
+    MINGW*|MSYS*)
+        # Git Bash on Windows — %APPDATA% as a Unix path
+        if [[ -z "${APPDATA:-}" ]]; then
+            echo "cursor-export-rules: APPDATA is not set (expected under Git Bash)" >&2
+            exit 1
+        fi
+        DB_PATH="$APPDATA/Cursor/User/globalStorage/state.vscdb"
+        ;;
     *)
         echo "Unsupported OS: $OS" >&2
         exit 1

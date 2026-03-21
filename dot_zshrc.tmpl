@@ -258,6 +258,17 @@ dottools() {
   fi
 }
 
+# Sync Cursor/VS Code → repo, commit with a descriptive message, push (see scripts/dotupload.sh)
+dotupload() {
+  local d
+  d=$(chezmoi source-path 2>/dev/null) || d="$HOME/.local/share/chezmoi"
+  if [[ -f "$d/scripts/dotupload.sh" ]]; then
+    [[ -x "$d/scripts/dotupload.sh" ]] && "$d/scripts/dotupload.sh" "$@" || bash "$d/scripts/dotupload.sh" "$@"
+  else
+    echo "dotupload: script not found ($d/scripts/dotupload.sh)"
+  fi
+}
+
 
 # ─────────────────────────────────────────────────── FZF ───────────────────
 # Fuzzy finder integration — Ctrl+R (history search), Ctrl+T (file picker).
