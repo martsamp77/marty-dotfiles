@@ -22,7 +22,7 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 
 $packages = @(
     @{ Id = 'Microsoft.PowerShell'; Name = 'PowerShell 7+' },
-    @{ Id = 'Twpayne.Chezmoi'; Name = 'chezmoi' },
+    @{ Id = 'twpayne.chezmoi'; Name = 'chezmoi' },
     @{ Id = 'Starship.Starship'; Name = 'Starship' },
     @{ Id = 'Anysphere.Cursor'; Name = 'Cursor' },
     @{ Id = 'Microsoft.VisualStudioCode'; Name = 'Visual Studio Code' }

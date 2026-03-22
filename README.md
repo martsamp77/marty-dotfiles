@@ -54,6 +54,8 @@ bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/ma
 irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install-powershell.ps1 | iex
 ```
 
+Requires **Git for Windows** on `PATH`. The script installs **chezmoi** with **`winget install --id twpayne.chezmoi`** (official id — **`Twpayne.Chezmoi` is invalid** and makes winget report “No package found”). If `chezmoi` is still missing afterward, it falls back to **[get.chezmoi.io](https://www.chezmoi.io/install/)** into **`%USERPROFILE%\.local\bin`** and fixes `PATH` for the current session.
+
 Then run `exec zsh` on macOS/Linux/WSL, or open a new terminal on Windows. Full steps and options: [Fresh install](#fresh-install).
 
 ---
@@ -135,7 +137,25 @@ exec zsh
 
 ### Windows (native PowerShell)
 
-Use the script header in [`install-powershell.ps1`](install-powershell.ps1) for the `irm` / `iex` one-liner, or run `.\install-powershell.ps1` from a clone. That path installs chezmoi if needed, runs `chezmoi init --apply`, and applies Windows-only templates (including optional Starship via `[data.ps]`).
+One-liner (same as [Quick install](#quick-install)):
+
+```powershell
+irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install-powershell.ps1 | iex
+```
+
+From a clone: `.\install-powershell.ps1` in the repo root.
+
+**Prerequisites:** **Git for Windows** must be installed (`git` on `PATH`). **winget** (App Installer) is optional but recommended; without it, chezmoi is installed only via the fallback below.
+
+**What the bootstrap does**
+
+1. Installs **chezmoi** if missing:
+   - Prefer **`winget install --id twpayne.chezmoi -e`** — the manifest id is **`twpayne.chezmoi`** (all lowercase). Older docs or copy-paste sometimes use **`Twpayne.Chezmoi`**, which **does not exist** in winget and fails with *No package found* (exit code like **`-1978335212`**).
+   - If `chezmoi` is still not available, runs the official PowerShell installer from **`https://get.chezmoi.io/ps1`**, installing the binary into **`%USERPROFILE%\.local\bin`**, refreshes machine+user `PATH`, and prepends `.local\bin` in the current session if needed.
+2. Runs **`chezmoi init --apply`** against this repo (SSH to GitHub when your key is recognized for `martsamp77`, otherwise HTTPS).
+3. Applies Windows-only templates (PowerShell profiles, optional **Starship** / **PSReadLine** preferences via `[data.ps]` prompts on first init).
+
+**Manual chezmoi only:** `winget install --id twpayne.chezmoi -e --accept-package-agreements --accept-source-agreements` — or follow [chezmoi: Install](https://www.chezmoi.io/install/).
 
 WSL Ubuntu shells still use the Unix flow above; Cursor on Windows uses Windows-side paths — see [Cursor and VS Code](#cursor-and-vs-code-ide-settings).
 
@@ -435,6 +455,8 @@ PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "
 | Reset `[data.ps]` | `dotps reset` |
 | Upgrade pwsh, chezmoi, Starship, Cursor, VS Code | `dottools` |
 
+`dottools` uses **`winget upgrade --id twpayne.chezmoi`** for chezmoi (same id as the bootstrap — not `Twpayne.Chezmoi`).
+
 If you merge `.chezmoi.toml.tmpl` into an existing `chezmoi.toml`, back up first. [`install-starship.ps1`](install-starship.ps1) remains available for Starship-only installs.
 
 ---
@@ -540,6 +562,20 @@ Ensure chezmoi was initialized with apply and `~/.local/share/chezmoi/.git` exis
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
+
+**Windows: winget “No package found” when installing chezmoi**
+
+The winget package id is **`twpayne.chezmoi`**. **`Twpayne.Chezmoi`** is wrong and triggers that error. Install with:
+
+```powershell
+winget install --id twpayne.chezmoi -e --accept-package-agreements --accept-source-agreements
+```
+
+Or re-run [`install-powershell.ps1`](install-powershell.ps1) (it uses the correct id and can fall back to **get.chezmoi.io**).
+
+**Windows: `chezmoi` not on PATH after bootstrap**
+
+Open a **new** terminal so `PATH` picks up winget’s install, or add **`%USERPROFILE%\.local\bin`** if you used the **get.chezmoi.io** fallback.
 
 **Diagnostics**
 

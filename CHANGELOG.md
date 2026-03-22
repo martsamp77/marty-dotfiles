@@ -19,6 +19,13 @@ For every commit that changes managed configuration, update this file (see [READ
 
 ## [Unreleased]
 
+### Changed
+- **[README.md](README.md)** — Quick install + Fresh install (Windows): **`twpayne.chezmoi`** vs invalid **`Twpayne.Chezmoi`**, **get.chezmoi.io** fallback to **`%USERPROFILE%\.local\bin`**, prerequisites, and troubleshooting for winget / PATH.
+
+### Fixed
+- **`install-powershell.ps1`** — use winget id **`twpayne.chezmoi`** (the old **`Twpayne.Chezmoi`** id returns “No package found” / exit `-1978335212`). If winget still leaves `chezmoi` missing, fall back to **`get.chezmoi.io`** into **`%USERPROFILE%\.local\bin`** and prepend that dir to the session `PATH`.
+- **`scripts/dottools.ps1`** — same **`twpayne.chezmoi`** id for `winget upgrade`.
+
 ### Added
 - **PowerShell profile** — [`.chezmoi/templates/marty-powershell.ps1.tmpl`](.chezmoi/templates/marty-powershell.ps1.tmpl): PSReadLine **Tab → MenuComplete** (ZSH-like menu completion) and **ShowToolTips**; interactive **`cd`** wraps `Set-Location` and runs **`Get-ChildItem`** on success (bare `cd` goes to `$HOME`); **`dots`** uses that `cd` so the chezmoi source lists after jumping in.
 - **Cursor / VS Code** — [`cursor/settings.json`](cursor/settings.json): set `terminal.integrated.suggest.enabled` to `false` so Tab reaches **PSReadLine** in the integrated terminal (avoids shell-integration suggestions competing with Tab vs. cmd); default Windows profile **PowerShell 7 (dotfiles)** runs `C:\Program Files\PowerShell\7\pwsh.exe` with `-WorkingDirectory ~`.

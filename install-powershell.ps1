@@ -24,6 +24,25 @@ Write-Host ""
 
 $REPO_SSH = 'git@github.com:martsamp77/marty-dotfiles.git'
 $REPO_HTTPS = 'https://github.com/martsamp77/marty-dotfiles.git'
+# winget manifest id is lowercase (Twpayne.Chezmoi is invalid — exits -1978335212)
+$ChezmoiWingetId = 'twpayne.chezmoi'
+
+function Refresh-MartyPathEnv {
+    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+        [System.Environment]::GetEnvironmentVariable('Path', 'User')
+}
+
+function Install-ChezmoiFromGetChezmoiIo {
+    param([string]$BinDir)
+    if (-not (Test-Path -LiteralPath $BinDir)) {
+        New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
+    }
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    } catch {}
+    $install = Invoke-RestMethod -Uri 'https://get.chezmoi.io/ps1' -UseBasicParsing
+    & ([scriptblock]::Create($install)) -b $BinDir
+}
 
 step "Checking git..."
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -33,16 +52,29 @@ ok "git present"
 
 step "Checking chezmoi..."
 if (-not (Get-Command chezmoi -ErrorAction SilentlyContinue)) {
+    $localBin = Join-Path $env:USERPROFILE '.local\bin'
     step "Installing chezmoi..."
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        die "winget not found. Install App Installer / winget, then: winget install Twpayne.Chezmoi — or see https://www.chezmoi.io/install/"
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget install --id $ChezmoiWingetId -e --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
+            warn "winget install chezmoi exited $LASTEXITCODE — trying get.chezmoi.io"
+        }
+        Refresh-MartyPathEnv
+    } else {
+        warn "winget not found — installing chezmoi via get.chezmoi.io"
     }
-    winget install --id Twpayne.Chezmoi -e --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) {
-        warn "winget install chezmoi exited $LASTEXITCODE"
+    if (-not (Get-Command chezmoi -ErrorAction SilentlyContinue)) {
+        step "Installing chezmoi (get.chezmoi.io → $localBin)..."
+        try {
+            Install-ChezmoiFromGetChezmoiIo -BinDir $localBin
+        } catch {
+            die "chezmoi install failed: $_ — see https://www.chezmoi.io/install/"
+        }
+        Refresh-MartyPathEnv
+        if ($env:Path -notlike "*${localBin}*") {
+            $env:Path = $localBin + [IO.Path]::PathSeparator + $env:Path
+        }
     }
-    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-        [System.Environment]::GetEnvironmentVariable('Path', 'User')
     if (-not (Get-Command chezmoi -ErrorAction SilentlyContinue)) {
         die "chezmoi not on PATH after install. Open a new terminal and re-run, or install manually: https://www.chezmoi.io/install/"
     }
@@ -83,8 +115,7 @@ try {
             step "Installing Starship (enabled in preferences)..."
             if (Get-Command winget -ErrorAction SilentlyContinue) {
                 winget install --id Starship.Starship -e --accept-package-agreements --accept-source-agreements 2>&1 | Out-Null
-                $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-                    [System.Environment]::GetEnvironmentVariable('Path', 'User')
+                Refresh-MartyPathEnv
             }
             if (Get-Command starship -ErrorAction SilentlyContinue) { ok "Starship installed" }
             else { warn "Install Starship manually: winget install Starship.Starship" }
