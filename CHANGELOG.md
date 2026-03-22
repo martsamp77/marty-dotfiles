@@ -21,6 +21,7 @@ For every commit that changes managed configuration, update this file (see [READ
 
 ### Added
 - **PowerShell profile** — [`.chezmoi/templates/marty-powershell.ps1.tmpl`](.chezmoi/templates/marty-powershell.ps1.tmpl): PSReadLine **Tab → MenuComplete** (ZSH-like menu completion) and **ShowToolTips**; interactive **`cd`** wraps `Set-Location` and runs **`Get-ChildItem`** on success (bare `cd` goes to `$HOME`); **`dots`** uses that `cd` so the chezmoi source lists after jumping in.
+- **Cursor / VS Code** — [`cursor/settings.json`](cursor/settings.json): set `terminal.integrated.suggest.enabled` to `false` so Tab reaches **PSReadLine** in the integrated terminal (avoids shell-integration suggestions competing with Tab vs. cmd); default Windows profile **PowerShell 7 (dotfiles)** runs `C:\Program Files\PowerShell\7\pwsh.exe` with `-WorkingDirectory ~`.
 - **`dotupload`** — [`scripts/dotupload.sh`](scripts/dotupload.sh) and [`scripts/dotupload.ps1`](scripts/dotupload.ps1) copy live Cursor/VS Code `settings.json` into `cursor/settings.json`, optionally export user rules, refresh extensions/snippet manifests, then `git add -A`, commit with a required descriptive message, and push; wired from [`dot_zshrc.tmpl`](dot_zshrc.tmpl) and the [PowerShell profile template](.chezmoi/templates/marty-powershell.ps1.tmpl). Documented in [README.md](README.md).
 - **`cursor-export-rules.sh`** — Git Bash (`MINGW` / `MSYS`) can resolve `state.vscdb` via `$APPDATA`, so `dotupload --rules` works from bash on Windows as well as PowerShell.
 

@@ -12,24 +12,49 @@ Personal configuration managed with [chezmoi](https://www.chezmoi.io/): one Git-
 
 ## Table of contents
 
-1. [Documentation map](#documentation-map)
-2. [Project overview](#project-overview)
-3. [Versioning](#versioning)
-4. [Fresh install](#fresh-install)
-5. [Updates and daily workflow](#updates-and-daily-workflow)
-6. [Maintaining this repository](#maintaining-this-repository)
-7. [Change history](#change-history)
-8. [How it works (chezmoi)](#how-it-works-chezmoi)
-9. [Features](#features)
-10. [Cursor and VS Code IDE settings](#cursor-and-vs-code-ide-settings)
-11. [Adding a new dotfile](#adding-a-new-dotfile)
-12. [Windows PowerShell (native)](#windows-powershell-native)
-13. [Auto-apply on SSH login / EC2 user-data](#auto-apply-on-ssh-login--ec2-user-data)
-14. [PuTTY setup (Windows)](#putty-setup-windows)
-15. [API keys and local secrets](#api-keys-and-local-secrets)
-16. [Templates](#templates)
-17. [Troubleshooting](#troubleshooting)
-18. [Why chezmoi?](#why-chezmoi)
+1. [Quick install](#quick-install)
+2. [Documentation map](#documentation-map)
+3. [Project overview](#project-overview)
+4. [Versioning](#versioning)
+5. [Fresh install](#fresh-install)
+6. [Updates and daily workflow](#updates-and-daily-workflow)
+7. [Maintaining this repository](#maintaining-this-repository)
+8. [Change history](#change-history)
+9. [How it works (chezmoi)](#how-it-works-chezmoi)
+10. [Features](#features)
+11. [Cursor and VS Code IDE settings](#cursor-and-vs-code-ide-settings)
+12. [Adding a new dotfile](#adding-a-new-dotfile)
+13. [Windows PowerShell (native)](#windows-powershell-native)
+14. [Auto-apply on SSH login / EC2 user-data](#auto-apply-on-ssh-login--ec2-user-data)
+15. [PuTTY setup (Windows)](#putty-setup-windows)
+16. [API keys and local secrets](#api-keys-and-local-secrets)
+17. [Templates](#templates)
+18. [Troubleshooting](#troubleshooting)
+19. [Why chezmoi?](#why-chezmoi)
+
+---
+
+## Quick install
+
+**macOS**
+
+```bash
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
+```
+
+**Linux** (Ubuntu, WSL, etc.)
+
+```bash
+bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install.sh)
+```
+
+**PC** (Windows PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install-powershell.ps1 | iex
+```
+
+Then run `exec zsh` on macOS/Linux/WSL, or open a new terminal on Windows. Full steps and options: [Fresh install](#fresh-install).
 
 ---
 
