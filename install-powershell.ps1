@@ -44,6 +44,35 @@ function Install-ChezmoiFromGetChezmoiIo {
     & ([scriptblock]::Create($install)) -b $BinDir
 }
 
+function Get-MartyPowerShellProfileTargets {
+    return @(
+        (Join-Path $env:USERPROFILE 'Documents\PowerShell\Microsoft.PowerShell_profile.ps1'),
+        (Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1')
+    )
+}
+
+# pwsh uses Documents\PowerShell\...; Windows PowerShell 5.1 uses Documents\WindowsPowerShell\...
+# Always create parent dirs and re-apply each target so `. $PROFILE` works in either host after install.
+function Ensure-MartyPowerShellProfiles {
+    foreach ($dest in (Get-MartyPowerShellProfileTargets)) {
+        # Use .NET (not Split-Path -LiteralPath -Parent) — PS 5.1 parameter-set clash on some builds.
+        $parent = [System.IO.Path]::GetDirectoryName($dest)
+        if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+            New-Item -ItemType Directory -Path $parent -Force | Out-Null
+        }
+        step "PowerShell profile: $dest"
+        chezmoi apply --verbose $dest
+        if (-not $?) {
+            warn "chezmoi apply exited $LASTEXITCODE for this profile — check: chezmoi managed"
+        }
+        if (Test-Path -LiteralPath $dest) {
+            ok "Profile file present"
+        } else {
+            warn "Profile still missing — try: chezmoi apply `"$dest`""
+        }
+    }
+}
+
 step "Checking git..."
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     die "git not found. Install Git for Windows first."
@@ -105,6 +134,7 @@ if (Test-Path (Join-Path $sourceDir '.git')) {
     chezmoi init --apply $REPO
     if (-not $?) { die "chezmoi init --apply failed" }
 }
+Ensure-MartyPowerShellProfiles
 ok "Dotfiles applied"
 
 # Optional Starship if enabled in chezmoi data
@@ -130,8 +160,10 @@ Write-Host "══════════════════════�
 Write-Host "  All done!" -ForegroundColor Green
 Write-Host "════════════════════════════════════════════════════"
 Write-Host ""
-Write-Host "  Reload your profile:"
-Write-Host "      . `$PROFILE"
+Write-Host "  Reload profiles (each host has its own path):"
+Write-Host "      pwsh:             . `"$(Join-Path $env:USERPROFILE 'Documents\PowerShell\Microsoft.PowerShell_profile.ps1')`""
+Write-Host "      Windows PS 5.1:   . `"$(Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1')`""
+Write-Host "      (or in that host: . `"`$PROFILE`")"
 Write-Host ""
 Write-Host "  Commands:  dotup   dotupload   dotps show   dotps wizard   undotps   dottools"
 Write-Host ""

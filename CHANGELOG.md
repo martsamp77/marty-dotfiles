@@ -20,9 +20,11 @@ For every commit that changes managed configuration, update this file (see [READ
 ## [Unreleased]
 
 ### Changed
+- **[`.chezmoi/templates/marty-powershell.ps1.tmpl`](.chezmoi/templates/marty-powershell.ps1.tmpl)** — ZSH-like directory listings: **`Show-MartySortedChildItems`** (directories first, then files); **`cd`** uses it after navigation; **`ls`** / **`dir`** replace aliases and forward common **`Get-ChildItem`** parameters; **`gci`** / **`Get-ChildItem`** unchanged for default output. PSReadLine **syntax + completion menu** colors (subtle ANSI) when supported.
 - **[README.md](README.md)** — Quick install + Fresh install (Windows): **`twpayne.chezmoi`** vs invalid **`Twpayne.Chezmoi`**, **get.chezmoi.io** fallback to **`%USERPROFILE%\.local\bin`**, prerequisites, and troubleshooting for winget / PATH.
 
 ### Fixed
+- **`install-powershell.ps1`** — after **`chezmoi init` / `apply`**, **`Ensure-MartyPowerShellProfiles`** creates **`Documents\PowerShell`** and **`Documents\WindowsPowerShell`** if needed and runs **`chezmoi apply`** on **both** **`Microsoft.PowerShell_profile.ps1`** paths so **pwsh** and **Windows PowerShell 5.1** each get a real profile file (fixes **`. $PROFILE`** when the path did not exist). Uses **`[IO.Path]::GetDirectoryName`** for parent dirs (avoids **PS 5.1** **`Split-Path -LiteralPath -Parent`** parameter-set errors). End-of-script hints show both dot-source paths.
 - **`install-powershell.ps1`** — use winget id **`twpayne.chezmoi`** (the old **`Twpayne.Chezmoi`** id returns “No package found” / exit `-1978335212`). If winget still leaves `chezmoi` missing, fall back to **`get.chezmoi.io`** into **`%USERPROFILE%\.local\bin`** and prepend that dir to the session `PATH`.
 - **`scripts/dottools.ps1`** — same **`twpayne.chezmoi`** id for `winget upgrade`.
 

@@ -152,8 +152,8 @@ From a clone: `.\install-powershell.ps1` in the repo root.
 1. Installs **chezmoi** if missing:
    - Prefer **`winget install --id twpayne.chezmoi -e`** — the manifest id is **`twpayne.chezmoi`** (all lowercase). Older docs or copy-paste sometimes use **`Twpayne.Chezmoi`**, which **does not exist** in winget and fails with *No package found* (exit code like **`-1978335212`**).
    - If `chezmoi` is still not available, runs the official PowerShell installer from **`https://get.chezmoi.io/ps1`**, installing the binary into **`%USERPROFILE%\.local\bin`**, refreshes machine+user `PATH`, and prepends `.local\bin` in the current session if needed.
-2. Runs **`chezmoi init --apply`** against this repo (SSH to GitHub when your key is recognized for `martsamp77`, otherwise HTTPS).
-3. Applies Windows-only templates (PowerShell profiles, optional **Starship** / **PSReadLine** preferences via `[data.ps]` prompts on first init).
+2. Runs **`chezmoi init --apply`** against this repo (SSH to GitHub when your key is recognized for `martsamp77`, otherwise HTTPS), which deploys Windows-only templates (PowerShell profiles, optional **Starship** / **PSReadLine** via **`[data.ps]`** prompts on first init).
+3. Ensures **both** PowerShell profile paths exist and re-applies each with **`chezmoi apply`**: **`%USERPROFILE%\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`** (**pwsh**) and **`%USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`** (**Windows PowerShell 5.1**). Parent folders are created if needed (so **`. $PROFILE`** works in either host).
 
 **Manual chezmoi only:** `winget install --id twpayne.chezmoi -e --accept-package-agreements --accept-source-agreements` — or follow [chezmoi: Install](https://www.chezmoi.io/install/).
 
@@ -455,6 +455,8 @@ PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "
 | Reset `[data.ps]` | `dotps reset` |
 | Upgrade pwsh, chezmoi, Starship, Cursor, VS Code | `dottools` |
 
+The profile mirrors zsh-style navigation: **`cd`** prints a **directories-first** listing of the folder you landed in (like `cd … && ls`). **`ls`** and **`dir`** use the same layout; **`Get-ChildItem`** / **`gci`** are unchanged if you want the stock table. Tab completion uses **PSReadLine** menu mode plus tinted command/completion colors when your terminal supports ANSI.
+
 `dottools` uses **`winget upgrade --id twpayne.chezmoi`** for chezmoi (same id as the bootstrap — not `Twpayne.Chezmoi`).
 
 If you merge `.chezmoi.toml.tmpl` into an existing `chezmoi.toml`, back up first. [`install-starship.ps1`](install-starship.ps1) remains available for Starship-only installs.
@@ -576,6 +578,17 @@ Or re-run [`install-powershell.ps1`](install-powershell.ps1) (it uses the correc
 **Windows: `chezmoi` not on PATH after bootstrap**
 
 Open a **new** terminal so `PATH` picks up winget’s install, or add **`%USERPROFILE%\.local\bin`** if you used the **get.chezmoi.io** fallback.
+
+**Windows: `. $PROFILE` says the profile path is not recognized**
+
+Usually the file is missing or you’re in the **wrong host** (`$PROFILE` differs for **pwsh** vs **powershell.exe**). Re-run [`install-powershell.ps1`](install-powershell.ps1), or apply both targets explicitly:
+
+```powershell
+chezmoi apply "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
+chezmoi apply "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+```
+
+Then reload with **`. "$PROFILE"`** in the same host you use day to day.
 
 **Diagnostics**
 

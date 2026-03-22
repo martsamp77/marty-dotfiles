@@ -19,6 +19,67 @@ if (Test-Path -LiteralPath $__martyLocalBin) {
     $env:Path = $__martyLocalBin + [IO.Path]::PathSeparator + $env:Path
 }
 
+# ZSH-style listing: directories first, then files (like grouping after `cd` / `ls` in zsh).
+function Show-MartySortedChildItems {
+    [CmdletBinding()]
+    param([Parameter(ValueFromPipeline = $true)] $InputObject)
+    begin { $items = [System.Collections.Generic.List[object]]::new() }
+    process {
+        if ($null -ne $InputObject) { [void]$items.Add($InputObject) }
+    }
+    end {
+        if ($items.Count -eq 0) {
+            Write-Host '  (empty)' -ForegroundColor DarkGray
+            return
+        }
+        $dirs = @($items | Where-Object { $_.PSIsContainer } | Sort-Object { $_.Name.ToLowerInvariant() })
+        $files = @($items | Where-Object { -not $_.PSIsContainer } | Sort-Object { $_.Name.ToLowerInvariant() })
+        if ($dirs.Count -gt 0) {
+            Write-Host "`n  Directories" -ForegroundColor DarkCyan
+            $dirs | Format-Table Mode, LastWriteTime, @{ Label = 'Name'; Expression = { $_.Name } } -AutoSize
+        }
+        if ($files.Count -gt 0) {
+            Write-Host "`n  Files" -ForegroundColor DarkCyan
+            $files | Format-Table Mode, LastWriteTime, Length, Name -AutoSize
+        }
+    }
+}
+
+# ls/dir: common Get-ChildItem args, directories-first listing (zsh-like). `gci` / `Get-ChildItem` stay the raw cmdlet.
+Remove-Item -Path alias:ls, alias:dir -Force -ErrorAction SilentlyContinue
+function ls {
+    [CmdletBinding(DefaultParameterSetName = 'Items')]
+    param(
+        [Parameter(ParameterSetName = 'Items', Position = 0)]
+        [string[]] $Path,
+        [Parameter(ParameterSetName = 'LiteralItems', Mandatory = $true)]
+        [string[]] $LiteralPath,
+        [string] $Filter,
+        [switch] $Force,
+        [switch] $Recurse,
+        [switch] $File,
+        [switch] $Directory,
+        [switch] $Name,
+        [string[]] $Include,
+        [string[]] $Exclude
+    )
+    $splat = @{}
+    foreach ($key in $PSBoundParameters.Keys) {
+        if ($key -eq 'Name') { continue }
+        $splat[$key] = $PSBoundParameters[$key]
+    }
+    if ($PSCmdlet.ParameterSetName -eq 'Items' -and -not $splat.ContainsKey('Path')) {
+        $splat['Path'] = @('.')
+    }
+    $cmd = Get-Command Get-ChildItem -CommandType Cmdlet
+    if ($Name) {
+        & $cmd @splat -Name
+    } else {
+        & $cmd @splat | Show-MartySortedChildItems
+    }
+}
+Set-Alias -Name dir -Value ls -Scope Global -Force
+
 # ZSH-style: cd then list (matches dot_zshrc.tmpl). Skip extra listing when -PassThru (pipeline contract).
 function cd {
     [CmdletBinding(DefaultParameterSetName = 'Path')]
@@ -43,7 +104,7 @@ function cd {
         $pi = Microsoft.PowerShell.Management\Set-Location @splat
         if (-not $?) { return }
         if (-not $PassThru) {
-            Get-ChildItem
+            Microsoft.PowerShell.Management\Get-ChildItem | Show-MartySortedChildItems
         }
         if ($PassThru) {
             Write-Output -InputObject $pi
@@ -130,6 +191,23 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
         Set-PSReadLineOption -ShowToolTips -ErrorAction Stop
     } catch {
         # Not available on all PSReadLine versions
+    }
+    try {
+        Set-PSReadLineOption -Colors @{
+            Command            = "`e[93m"
+            Parameter          = "`e[96m"
+            Operator           = "`e[35m"
+            Variable           = "`e[92m"
+            String             = "`e[33m"
+            Number             = "`e[35m"
+            Member             = "`e[97m"
+            Type               = "`e[95m"
+            Comment            = "`e[32m"
+            InlinePrediction   = "`e[38;5;102m"
+            Selection          = "`e[7m"
+        } -ErrorAction Stop
+    } catch {
+        # Older PSReadLine / strict hosts
     }
 }
 
