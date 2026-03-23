@@ -1,4 +1,3 @@
-{{- define "marty-powershell.ps1" -}}
 {{- /* chezmoi: managed PowerShell profile body (Windows) */ -}}
 {{- $starship := false -}}
 {{- $prediction := "none" -}}
@@ -230,4 +229,3 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
     Write-Warning 'Starship is enabled in dotps settings but not on PATH. Install: winget install Starship.Starship — then dotapply'
 }
 {{- end }}
-{{- end -}}

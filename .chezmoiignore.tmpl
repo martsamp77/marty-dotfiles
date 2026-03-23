@@ -24,6 +24,11 @@ cursor
 # Helper scripts — invoked manually, not deployed to ~/
 scripts
 
+{{- if eq .chezmoi.os "windows" }}
+# Bash apply hook is not executable on native Windows PowerShell.
+run_after_apply-cursor.sh
+{{- end }}
+
 {{- if ne .chezmoi.os "windows" }}
 # PowerShell profiles — Windows only (pwsh + Windows PowerShell 5.1)
 Documents/PowerShell/Microsoft.PowerShell_profile.ps1
