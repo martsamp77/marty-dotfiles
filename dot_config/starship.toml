@@ -1,8 +1,22 @@
 "$schema" = "https://starship.rs/config-schema.json"
 
-add_newline = false
+# Richer prompt: contextual modules (languages, cloud, etc.) when relevant.
+# Windows: git_status can be slow on huge repos or network paths — set [git_status] disabled = true or trim `format` if needed.
+# Docs: https://starship.rs/config/ — verify with: starship explain
+add_newline = true
 
-format = """$directory$git_branch$git_status$character"""
+# $all omits modules listed in right_format (no duplicate cmd_duration / time).
+format = "$all"
+
+right_format = """$cmd_duration$time"""
+
+[cmd_duration]
+min_time = 2_000
+format = "took [$duration]($style) "
+
+[time]
+disabled = false
+time_format = "%T"
 
 [directory]
 style = "bold cyan"
@@ -14,5 +28,5 @@ style = "bold blue"
 style = "yellow"
 
 [character]
-success_symbol = "[❯](bold magenta)"
+success_symbol = "[❯](bold green)"
 error_symbol = "[❯](bold red)"

@@ -4,11 +4,15 @@
 #
 #  One-liner:
 #    irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install-powershell.ps1 | iex
+# 
+#  Undo settings one-liner:
+#    irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/undo-powershell.ps1 | iex
 #
 #  Or from a clone:
 #    .\install-powershell.ps1
 #
 #  Installs chezmoi if needed, runs chezmoi init --apply, optionally Starship.
+#  Starship setup follows the standard model: install binary + shell profile init.
 # ══════════════════════════════════════════════════════════════════════════════
 
 function step { param($msg) Write-Host "`n  " -NoNewline; Write-Host "▸ $msg" -ForegroundColor Cyan }
@@ -137,7 +141,8 @@ if (Test-Path (Join-Path $sourceDir '.git')) {
 Ensure-MartyPowerShellProfiles
 ok "Dotfiles applied"
 
-# Optional Starship if enabled in chezmoi data
+# Optional Starship if enabled in chezmoi data.
+# Starship behavior is configured by ~/.config/starship.toml; profile init is managed by chezmoi templates.
 try {
     $dataJson = chezmoi data --format json 2>$null | ConvertFrom-Json
     if ($dataJson.ps -and $dataJson.ps.starship -eq $true) {

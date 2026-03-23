@@ -54,7 +54,15 @@ bash <(curl -fsLS https://raw.githubusercontent.com/martsamp77/marty-dotfiles/ma
 irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/install-powershell.ps1 | iex
 ```
 
+Undo PowerShell dotfiles settings (keeps Starship installed by default):
+
+```powershell
+irm https://raw.githubusercontent.com/martsamp77/marty-dotfiles/main/undo-powershell.ps1 | iex
+```
+
 Requires **Git for Windows** on `PATH`. The script installs **chezmoi** with **`winget install --id twpayne.chezmoi`** (official id — **`Twpayne.Chezmoi` is invalid** and makes winget report “No package found”). If `chezmoi` is still missing afterward, it falls back to **[get.chezmoi.io](https://www.chezmoi.io/install/)** into **`%USERPROFILE%\.local\bin`** and fixes `PATH` for the current session.
+
+Starship behavior is controlled by **`%USERPROFILE%\.config\starship.toml`** and profile initialization. See [Starship Configuration](https://starship.rs/config/) and [Starship Advanced Installation](https://starship.rs/installing/).
 
 Then run `exec zsh` on macOS/Linux/WSL, or open a new terminal on Windows. Full steps and options: [Fresh install](#fresh-install).
 
@@ -460,6 +468,8 @@ The profile mirrors zsh-style navigation: **`cd`** prints a **directories-first*
 `dottools` uses **`winget upgrade --id twpayne.chezmoi`** for chezmoi (same id as the bootstrap — not `Twpayne.Chezmoi`).
 
 If you merge `.chezmoi.toml.tmpl` into an existing `chezmoi.toml`, back up first. [`install-starship.ps1`](install-starship.ps1) remains available for Starship-only installs.
+
+**Starship config** is managed as [`dot_config/starship.toml`](dot_config/starship.toml) (deploys to **`%USERPROFILE%\.config\starship.toml`**). It uses a rich **`format = "$all"`**, **`right_format`** for duration + clock, and **transient prompt** in PowerShell when Starship is on. Edit via **`chezmoi edit ~/.config/starship.toml`** then **`dotapply`**, or open the live file after apply. Tune with **`starship explain`**; override the file path with **`STARSHIP_CONFIG`** ([Starship: Configuration](https://starship.rs/config/)).
 
 ---
 

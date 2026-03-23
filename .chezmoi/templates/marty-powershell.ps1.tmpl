@@ -214,8 +214,17 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
 {{- if $starship }}
 
 # ── Starship prompt ─────────────────────────────────────────────────────────
+# Transient prompt: full line for the active prompt, compact `character` for history (see https://starship.rs/advanced-config/ ).
 if (Get-Command starship -ErrorAction SilentlyContinue) {
-    Invoke-Expression (&starship init powershell)
+    function Invoke-Starship-TransientFunction {
+        & starship module character
+    }
+    Invoke-Expression (& starship init powershell)
+    try {
+        Enable-TransientPrompt
+    } catch {
+        # Starship build without transient API — keep normal prompt
+    }
 } else {
     Write-Warning 'Starship is enabled in dotps settings but not on PATH. Install: winget install Starship.Starship — then dotapply'
 }
