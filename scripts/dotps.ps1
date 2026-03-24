@@ -2,8 +2,8 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  dotps — manage PowerShell dotfile preferences ([data.ps] in chezmoi.toml)
 #
-#  Usage: dotps show | dotps wizard | dotps off | dotps reset | dotps starshipon | dotps starshipoff
-#  (Hyphen forms starship-on / starship-off still accepted for scripts invoked directly.)
+#  Usage: dotps show | dotps wizard | dotps off | dotps reset
+#  Starship toggle subcommands are intentionally disabled in PowerShell.
 #  (Usually invoked via the dotps function in $PROFILE.)
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -27,7 +27,7 @@ function Get-LinesFromToml {
 
 function Save-LinesToToml {
     param([string] $Path, [string[]] $Lines)
-    $dir = Split-Path -LiteralPath $Path -Parent
+    $dir = [System.IO.Path]::GetDirectoryName($Path)
     if (-not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
@@ -178,27 +178,21 @@ switch ($Command) {
         try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
         Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
     }
-    'starship-on'
-    'starshipon' {
-        $cur = Read-CurrentPsData
-        $path = Get-ChezmoiConfigPath
-        $lines = Get-LinesFromToml $path
-        $merged = Replace-DataPsBlock -AllLines $lines -Starship $true -Prediction $cur.Prediction -PredictionView $cur.PredictionView
-        Save-LinesToToml -Path $path -Lines $merged
-        Write-Host '  Starship enabled in chezmoi [data.ps].' -ForegroundColor Green
-        try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
-        Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
+    'starship-on' {
+        Write-Warning 'Starship sync toggles are disabled for PowerShell in this setup.'
+        Write-Host '  No changes were written and chezmoi apply was not run.' -ForegroundColor Yellow
     }
-    'starship-off'
+    'starshipon' {
+        Write-Warning 'Starship sync toggles are disabled for PowerShell in this setup.'
+        Write-Host '  No changes were written and chezmoi apply was not run.' -ForegroundColor Yellow
+    }
+    'starship-off' {
+        Write-Warning 'Starship sync toggles are disabled for PowerShell in this setup.'
+        Write-Host '  No changes were written and chezmoi apply was not run.' -ForegroundColor Yellow
+    }
     'starshipoff' {
-        $cur = Read-CurrentPsData
-        $path = Get-ChezmoiConfigPath
-        $lines = Get-LinesFromToml $path
-        $merged = Replace-DataPsBlock -AllLines $lines -Starship $false -Prediction $cur.Prediction -PredictionView $cur.PredictionView
-        Save-LinesToToml -Path $path -Lines $merged
-        Write-Host '  Starship disabled in chezmoi [data.ps] (prediction settings unchanged).' -ForegroundColor Green
-        try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
-        Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
+        Write-Warning 'Starship sync toggles are disabled for PowerShell in this setup.'
+        Write-Host '  No changes were written and chezmoi apply was not run.' -ForegroundColor Yellow
     }
     'reset' {
         $path = Get-ChezmoiConfigPath

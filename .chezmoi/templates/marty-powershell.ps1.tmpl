@@ -321,6 +321,10 @@ function dotps {
         [Parameter(Position = 0)]
         [string] $Cmd = 'show'
     )
+    if ($Cmd -in @('starshipon', 'starshipoff', 'starship-on', 'starship-off', 'starshipupdate')) {
+        Write-Warning 'Starship sync toggles are disabled for PowerShell in this setup.'
+        return
+    }
     $dir = Get-MartyDotfilesScriptsDir
     if (-not $dir) { Write-Error 'chezmoi scripts not found — install dotfiles or ensure ~/.local/share/chezmoi/scripts exists'; return }
     & (Join-Path $dir 'dotps.ps1') $Cmd
@@ -328,16 +332,10 @@ function dotps {
 function undotps { dotps off }
 
 function starshipon {
-    dotps starshipon
-    if (Test-Path -LiteralPath $PROFILE) {
-        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
-    }
+    Write-Warning 'starshipon is disabled in PowerShell (sync path disabled).'
 }
 function starshipoff {
-    dotps starshipoff
-    if (Test-Path -LiteralPath $PROFILE) {
-        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
-    }
+    Write-Warning 'starshipoff is disabled in PowerShell (sync path disabled).'
 }
 function Invoke-MartyStarshipUpdateInstall {
     Write-Host ''
@@ -361,17 +359,7 @@ function Invoke-MartyStarshipUpdateInstall {
     }
 }
 function starshipupdate {
-    $dir = Get-MartyDotfilesScriptsDir
-    $script = if ($dir) { Join-Path $dir 'dotstarship.ps1' } else { $null }
-    if ($script -and (Test-Path -LiteralPath $script)) {
-        & $script update
-    } else {
-        Invoke-MartyStarshipUpdateInstall
-    }
-    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
-    if ((Get-Command starship -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $PROFILE)) {
-        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
-    }
+    Write-Warning 'starshipupdate is disabled in PowerShell (sync path disabled).'
 }
 
 # ── PSReadLine prediction (pwsh 7.2+ / PSReadLine 2.2+) ─────────────────────
