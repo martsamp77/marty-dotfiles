@@ -460,6 +460,10 @@ PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "
 | Inspect `[data.ps]` | `dotps show` |
 | Re-run prompts | `dotps wizard` |
 | Disable Starship + prediction | `undotps` or `dotps off` |
+| Starship on only (chezmoi + reload profile) | `starshipon` (also `dotps starship-on`) |
+| Starship off only (keeps PSReadLine prediction) | `starshipoff` (also `dotps starship-off`) |
+| Update Starship to latest (winget then [install.ps1](https://starship.rs/install.ps1) / GitHub release) | `starshipupdate` |
+| *(If `starshipon` / `starshipoff` / `starshipupdate` are missing)* | Run **`chezmoi apply`**, then **`. $PROFILE`** (or open a new shell). They are functions in the managed profile. |
 | Reset `[data.ps]` | `dotps reset` |
 | Upgrade pwsh, chezmoi, Starship, Cursor, VS Code | `dottools` |
 

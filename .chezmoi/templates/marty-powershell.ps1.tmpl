@@ -33,8 +33,9 @@ function Show-MartySubfoldersWide {
     $dirs | Format-Wide -Property Name -AutoSize
 }
 
-# ls/dir: directories first, then files with details (zsh-like grouping). `gci` / `Get-ChildItem` stay the raw cmdlet.
-function Show-MartySortedChildItems {
+# ls/dir: one listing sorted by name (case-insensitive); folder names Cyan, file names Gray; metadata DarkGray.
+# For dirs-first instead, sort with: Sort-Object @{E={-not $_.PSIsContainer}}, @{E={$_.Name.ToLowerInvariant()}}
+function Show-MartyColoredChildListing {
     [CmdletBinding()]
     param([Parameter(ValueFromPipeline = $true)] $InputObject)
     begin { $items = [System.Collections.Generic.List[object]]::new() }
@@ -46,15 +47,17 @@ function Show-MartySortedChildItems {
             Write-Host '  (empty)' -ForegroundColor DarkGray
             return
         }
-        $dirs = @($items | Where-Object { $_.PSIsContainer } | Sort-Object { $_.Name.ToLowerInvariant() })
-        $files = @($items | Where-Object { -not $_.PSIsContainer } | Sort-Object { $_.Name.ToLowerInvariant() })
-        if ($dirs.Count -gt 0) {
-            Write-Host "`n  Directories" -ForegroundColor DarkCyan
-            $dirs | Format-Table Mode, LastWriteTime, @{ Label = 'Name'; Expression = { $_.Name } } -AutoSize
-        }
-        if ($files.Count -gt 0) {
-            Write-Host "`n  Files" -ForegroundColor DarkCyan
-            $files | Format-Table Mode, LastWriteTime, Length, Name -AutoSize
+        $sorted = $items | Sort-Object { $_.Name.ToLowerInvariant() }
+        foreach ($it in $sorted) {
+            $mode = [string]$it.Mode
+            $time = if ($null -ne $it.LastWriteTime) {
+                $it.LastWriteTime.ToString('MM/dd/yyyy  hh:mm tt')
+            } else { '' }
+            $lenStr = if ($it.PSIsContainer) { '' } else { [string]$it.Length }
+            $meta = ('{0,-10} {1,-22} {2,14}   ' -f $mode, $time, $lenStr)
+            Write-Host $meta -NoNewline -ForegroundColor DarkGray
+            $nameColor = if ($it.PSIsContainer) { 'Cyan' } else { 'Gray' }
+            Write-Host $it.Name -ForegroundColor $nameColor
         }
     }
 }
@@ -88,7 +91,7 @@ function ls {
     if ($Name) {
         & $cmd @splat -Name
     } else {
-        & $cmd @splat | Show-MartySortedChildItems
+        & $cmd @splat | Show-MartyColoredChildListing
     }
 }
 Set-Alias -Name dir -Value ls -Scope Global -Force
@@ -133,6 +136,18 @@ function Get-MartyChezmoiSource {
     return $null
 }
 
+# Resolves .../scripts even if chezmoi source-path fails (e.g. PATH not refreshed yet).
+function Get-MartyDotfilesScriptsDir {
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    $src = Get-MartyChezmoiSource
+    if ($src) { [void]$candidates.Add((Join-Path $src 'scripts')) }
+    [void]$candidates.Add((Join-Path $env:USERPROFILE '.local\share\chezmoi\scripts'))
+    foreach ($d in $candidates) {
+        if (Test-Path -LiteralPath (Join-Path $d 'dotps.ps1')) { return $d }
+    }
+    return $null
+}
+
 function dotup { chezmoi update @args }
 function dotapply { chezmoi apply -v @args }
 function dotdiff { chezmoi diff @args }
@@ -143,27 +158,72 @@ function dots {
     else { Write-Error 'chezmoi source-path failed — is chezmoi installed?' }
 }
 function dottools {
-    $src = Get-MartyChezmoiSource
-    if (-not $src) { Write-Error 'chezmoi source-path failed'; return }
-    $p = Join-Path $src 'scripts\dottools.ps1'
+    $dir = Get-MartyDotfilesScriptsDir
+    if (-not $dir) { Write-Error 'chezmoi scripts not found — install dotfiles or ensure ~/.local/share/chezmoi/scripts exists'; return }
+    $p = Join-Path $dir 'dottools.ps1'
     if (-not (Test-Path -LiteralPath $p)) { Write-Error "dottools: not found: $p"; return }
     & $p @args
 }
 function dotupload {
-    $src = Get-MartyChezmoiSource
-    if (-not $src) { Write-Error 'chezmoi source-path failed'; return }
-    $p = Join-Path $src 'scripts\dotupload.ps1'
+    $dir = Get-MartyDotfilesScriptsDir
+    if (-not $dir) { Write-Error 'chezmoi scripts not found — install dotfiles or ensure ~/.local/share/chezmoi/scripts exists'; return }
+    $p = Join-Path $dir 'dotupload.ps1'
     if (-not (Test-Path -LiteralPath $p)) { Write-Error "dotupload: not found: $p"; return }
     & $p @args
 }
 function dotps {
-    $src = Get-MartyChezmoiSource
-    if (-not $src) { Write-Error 'chezmoi source-path failed'; return }
-    $p = Join-Path $src 'scripts\dotps.ps1'
-    if (-not (Test-Path -LiteralPath $p)) { Write-Error "dotps: not found: $p"; return }
-    & $p @args
+    $dir = Get-MartyDotfilesScriptsDir
+    if (-not $dir) { Write-Error 'chezmoi scripts not found — install dotfiles or ensure ~/.local/share/chezmoi/scripts exists'; return }
+    & (Join-Path $dir 'dotps.ps1') @args
 }
 function undotps { dotps off }
+
+function starshipon {
+    dotps starship-on
+    if (Test-Path -LiteralPath $PROFILE) {
+        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
+    }
+}
+function starshipoff {
+    dotps starship-off
+    if (Test-Path -LiteralPath $PROFILE) {
+        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
+    }
+}
+function Invoke-MartyStarshipUpdateInstall {
+    Write-Host ''
+    Write-Host '  starshipupdate' -ForegroundColor Cyan
+    Write-Host ''
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host '  winget upgrade Starship.Starship...' -ForegroundColor DarkGray
+        winget upgrade --id Starship.Starship -e --accept-package-agreements --accept-source-agreements 2>&1 | Out-Null
+    }
+    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    Write-Host '  https://starship.rs/install.ps1 ...' -ForegroundColor DarkGray
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    } catch {}
+    Invoke-Expression (Invoke-RestMethod -Uri 'https://starship.rs/install.ps1' -UseBasicParsing)
+    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    if (Get-Command starship -ErrorAction SilentlyContinue) {
+        Write-Host ('  OK: ' + (& starship --version 2>$null)) -ForegroundColor Green
+    } else {
+        Write-Warning '  starship not on PATH — open a new terminal.'
+    }
+}
+function starshipupdate {
+    $dir = Get-MartyDotfilesScriptsDir
+    $script = if ($dir) { Join-Path $dir 'dotstarship.ps1' } else { $null }
+    if ($script -and (Test-Path -LiteralPath $script)) {
+        & $script update
+    } else {
+        Invoke-MartyStarshipUpdateInstall
+    }
+    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    if ((Get-Command starship -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $PROFILE)) {
+        try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
+    }
+}
 
 # ── PSReadLine prediction (pwsh 7.2+ / PSReadLine 2.2+) ─────────────────────
 if (Get-Module -ListAvailable -Name PSReadLine) {

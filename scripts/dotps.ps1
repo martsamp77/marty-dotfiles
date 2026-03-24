@@ -2,13 +2,13 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  dotps — manage PowerShell dotfile preferences ([data.ps] in chezmoi.toml)
 #
-#  Usage: dotps show | dotps wizard | dotps off | dotps reset
+#  Usage: dotps show | dotps wizard | dotps off | dotps reset | dotps starship-on | dotps starship-off
 #  (Usually invoked via the dotps function in $PROFILE.)
 # ══════════════════════════════════════════════════════════════════════════════
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('show', 'wizard', 'off', 'reset')]
+    [ValidateSet('show', 'wizard', 'off', 'reset', 'starship-on', 'starship-off')]
     [string] $Command = 'show'
 )
 
@@ -174,6 +174,26 @@ switch ($Command) {
         $merged = Replace-DataPsBlock -AllLines $lines -Starship $false -Prediction 'none' -PredictionView 'inline'
         Save-LinesToToml -Path $path -Lines $merged
         Write-Host '  [data.ps] set to minimal (Starship off, prediction none).' -ForegroundColor Green
+        try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
+        Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
+    }
+    'starship-on' {
+        $cur = Read-CurrentPsData
+        $path = Get-ChezmoiConfigPath
+        $lines = Get-LinesFromToml $path
+        $merged = Replace-DataPsBlock -AllLines $lines -Starship $true -Prediction $cur.Prediction -PredictionView $cur.PredictionView
+        Save-LinesToToml -Path $path -Lines $merged
+        Write-Host '  Starship enabled in chezmoi [data.ps].' -ForegroundColor Green
+        try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
+        Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
+    }
+    'starship-off' {
+        $cur = Read-CurrentPsData
+        $path = Get-ChezmoiConfigPath
+        $lines = Get-LinesFromToml $path
+        $merged = Replace-DataPsBlock -AllLines $lines -Starship $false -Prediction $cur.Prediction -PredictionView $cur.PredictionView
+        Save-LinesToToml -Path $path -Lines $merged
+        Write-Host '  Starship disabled in chezmoi [data.ps] (prediction settings unchanged).' -ForegroundColor Green
         try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
         Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
     }

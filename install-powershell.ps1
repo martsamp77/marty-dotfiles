@@ -290,7 +290,7 @@ foreach ($p in (Get-MartyPowerShellProfileTargets)) {
     }
 }
 
-$candidateCommands = @('dotup', 'dotupload', 'dotps', 'undotps', 'dottools')
+$candidateCommands = @('dotup', 'dotupload', 'dotps', 'undotps', 'dottools', 'starshipon', 'starshipoff', 'starshipupdate')
 $available = @()
 foreach ($c in $candidateCommands) {
     if (Get-Command $c -ErrorAction SilentlyContinue) {
