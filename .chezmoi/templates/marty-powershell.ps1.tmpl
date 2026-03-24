@@ -19,27 +19,21 @@ if (Test-Path -LiteralPath $__martyLocalBin) {
     $env:Path = $__martyLocalBin + [IO.Path]::PathSeparator + $env:Path
 }
 
-# ls/dir: subfolder names only, one per line (zsh-like list view, no details).
-function Show-MartySubfolderNamesOnly {
-    [CmdletBinding()]
-    param([Parameter(ValueFromPipeline = $true)] $InputObject)
-    begin { $items = [System.Collections.Generic.List[object]]::new() }
-    process {
-        if ($null -ne $InputObject) { [void]$items.Add($InputObject) }
+# After `cd`: subfolders only, names in horizontal columns (Format-Wide).
+function Show-MartySubfoldersWide {
+    $dirs = @(
+        Microsoft.PowerShell.Management\Get-ChildItem -Directory -ErrorAction SilentlyContinue |
+            Sort-Object { $_.Name.ToLowerInvariant() }
+    )
+    if ($dirs.Count -eq 0) {
+        Write-Host '  (no subfolders)' -ForegroundColor DarkGray
+        return
     }
-    end {
-        $dirs = @($items | Where-Object { $_.PSIsContainer } | Sort-Object { $_.Name.ToLowerInvariant() })
-        if ($dirs.Count -eq 0) {
-            Write-Host '  (empty)' -ForegroundColor DarkGray
-            return
-        }
-        foreach ($d in $dirs) {
-            Write-Output $d.Name
-        }
-    }
+    Write-Host ''
+    $dirs | Format-Wide -Property Name -AutoSize
 }
 
-# After `cd`: directories first, then files with details (unchanged zsh-style grouping).
+# ls/dir: directories first, then files with details (zsh-like grouping). `gci` / `Get-ChildItem` stay the raw cmdlet.
 function Show-MartySortedChildItems {
     [CmdletBinding()]
     param([Parameter(ValueFromPipeline = $true)] $InputObject)
@@ -65,7 +59,6 @@ function Show-MartySortedChildItems {
     }
 }
 
-# ls/dir: folder names only (list view). Use `gci` / `Get-ChildItem` for full/default output. With -File, native listing is used.
 Remove-Item -Path alias:ls, alias:dir -Force -ErrorAction SilentlyContinue
 function ls {
     [CmdletBinding(DefaultParameterSetName = 'Items')]
@@ -92,16 +85,10 @@ function ls {
         $splat['Path'] = @('.')
     }
     $cmd = Get-Command Get-ChildItem -CommandType Cmdlet
-    $wantFilesOnly = $PSBoundParameters.ContainsKey('File') -and $File
-    if ($wantFilesOnly) {
-        if ($Name) { & $cmd @splat -Name } else { & $cmd @splat }
-        return
-    }
-    $splat['Directory'] = $true
     if ($Name) {
         & $cmd @splat -Name
     } else {
-        & $cmd @splat | Show-MartySubfolderNamesOnly
+        & $cmd @splat | Show-MartySortedChildItems
     }
 }
 Set-Alias -Name dir -Value ls -Scope Global -Force
@@ -130,7 +117,7 @@ function cd {
         $pi = Microsoft.PowerShell.Management\Set-Location @splat
         if (-not $?) { return }
         if (-not $PassThru) {
-            Microsoft.PowerShell.Management\Get-ChildItem | Show-MartySortedChildItems
+            Show-MartySubfoldersWide
         }
         if ($PassThru) {
             Write-Output -InputObject $pi
