@@ -72,6 +72,9 @@ function ls {
         [string[]] $LiteralPath,
         [string] $Filter,
         [switch] $Force,
+        # -h / -Hidden: show hidden items (maps to Get-ChildItem -Force on Windows PowerShell)
+        [Alias('h')]
+        [switch] $Hidden,
         [switch] $Recurse,
         [switch] $File,
         [switch] $Directory,
@@ -81,9 +84,10 @@ function ls {
     )
     $splat = @{}
     foreach ($key in $PSBoundParameters.Keys) {
-        if ($key -eq 'Name') { continue }
+        if ($key -in @('Name', 'Hidden')) { continue }
         $splat[$key] = $PSBoundParameters[$key]
     }
+    if ($Hidden) { $splat['Force'] = $true }
     if ($PSCmdlet.ParameterSetName -eq 'Items' -and -not $splat.ContainsKey('Path')) {
         $splat['Path'] = @('.')
     }
@@ -171,21 +175,26 @@ function dotupload {
     if (-not (Test-Path -LiteralPath $p)) { Write-Error "dotupload: not found: $p"; return }
     & $p @args
 }
+# Pass a single subcommand string — do not splat @args into dotps.ps1 (PS 5.1 treats starship-off as a switch name).
 function dotps {
+    param(
+        [Parameter(Position = 0)]
+        [string] $Cmd = 'show'
+    )
     $dir = Get-MartyDotfilesScriptsDir
     if (-not $dir) { Write-Error 'chezmoi scripts not found — install dotfiles or ensure ~/.local/share/chezmoi/scripts exists'; return }
-    & (Join-Path $dir 'dotps.ps1') @args
+    & (Join-Path $dir 'dotps.ps1') $Cmd
 }
 function undotps { dotps off }
 
 function starshipon {
-    dotps starship-on
+    dotps starshipon
     if (Test-Path -LiteralPath $PROFILE) {
         try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
     }
 }
 function starshipoff {
-    dotps starship-off
+    dotps starshipoff
     if (Test-Path -LiteralPath $PROFILE) {
         try { . $PROFILE } catch { Write-Warning $_.Exception.Message }
     }

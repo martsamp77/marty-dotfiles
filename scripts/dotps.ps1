@@ -2,13 +2,14 @@
 # ══════════════════════════════════════════════════════════════════════════════
 #  dotps — manage PowerShell dotfile preferences ([data.ps] in chezmoi.toml)
 #
-#  Usage: dotps show | dotps wizard | dotps off | dotps reset | dotps starship-on | dotps starship-off
+#  Usage: dotps show | dotps wizard | dotps off | dotps reset | dotps starshipon | dotps starshipoff
+#  (Hyphen forms starship-on / starship-off still accepted for scripts invoked directly.)
 #  (Usually invoked via the dotps function in $PROFILE.)
 # ══════════════════════════════════════════════════════════════════════════════
 
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('show', 'wizard', 'off', 'reset', 'starship-on', 'starship-off')]
+    [ValidateSet('show', 'wizard', 'off', 'reset', 'starship-on', 'starship-off', 'starshipon', 'starshipoff')]
     [string] $Command = 'show'
 )
 
@@ -177,7 +178,8 @@ switch ($Command) {
         try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
         Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
     }
-    'starship-on' {
+    'starship-on'
+    'starshipon' {
         $cur = Read-CurrentPsData
         $path = Get-ChezmoiConfigPath
         $lines = Get-LinesFromToml $path
@@ -187,7 +189,8 @@ switch ($Command) {
         try { chezmoi apply -v } catch { Write-Warning "chezmoi apply failed: $_" }
         Write-Host '  Reload:  . $PROFILE' -ForegroundColor Green
     }
-    'starship-off' {
+    'starship-off'
+    'starshipoff' {
         $cur = Read-CurrentPsData
         $path = Get-ChezmoiConfigPath
         $lines = Get-LinesFromToml $path

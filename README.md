@@ -232,6 +232,10 @@ Any commit that changes **managed configuration** should also update **[CHANGELO
 - For work in progress, add bullets under `## [Unreleased]` (see the changelog file).
 - For a release, add `## [x.y.z] — date`, move items out of Unreleased, and bump **`VERSION`** and **`DOTFILES_VERSION`** together.
 
+### Shell verification (zsh + PowerShell)
+
+After meaningful changes to shell profiles, install scripts, or `scripts/*.ps1`, follow **[docs/shell-test-checklist.md](docs/shell-test-checklist.md)** (undo → install → command matrix). AI maintainers should re-run it until all checks pass.
+
 ### Enforcing changelog updates (optional hook)
 
 This repo includes [`.githooks/pre-commit`](.githooks/pre-commit). After cloning, enable it once:
@@ -460,8 +464,8 @@ PowerShell profiles are managed by chezmoi **only on Windows** (`chezmoi.os == "
 | Inspect `[data.ps]` | `dotps show` |
 | Re-run prompts | `dotps wizard` |
 | Disable Starship + prediction | `undotps` or `dotps off` |
-| Starship on only (chezmoi + reload profile) | `starshipon` (also `dotps starship-on`) |
-| Starship off only (keeps PSReadLine prediction) | `starshipoff` (also `dotps starship-off`) |
+| Starship on only (chezmoi + reload profile) | `starshipon` or `dotps starshipon` (hyphen forms `starship-on` work when calling `dotps.ps1` directly) |
+| Starship off only (keeps PSReadLine prediction) | `starshipoff` or `dotps starshipoff` |
 | Update Starship to latest (winget then [install.ps1](https://starship.rs/install.ps1) / GitHub release) | `starshipupdate` |
 | *(If `starshipon` / `starshipoff` / `starshipupdate` are missing)* | Run **`chezmoi apply`**, then **`. $PROFILE`** (or open a new shell). They are functions in the managed profile. |
 | Reset `[data.ps]` | `dotps reset` |
