@@ -356,10 +356,14 @@ if [[ -d ~/.local/share/chezmoi/.git ]]; then
         cd ~/.local/share/chezmoi || exit
         git fetch --quiet origin main 2>/dev/null
         if ! git diff --quiet HEAD origin/main 2>/dev/null; then
-            print -P "\n%F{14}  dotfiles:%f update available — applying…"
-            chezmoi update --force 2>/dev/null \
-                && print -P "%F{10}  dotfiles:%f updated ✓" \
-                || print -P "%F{9}  dotfiles:%f update failed · run 'dotup' manually"
+            print -P "\n%F{14}  dotfiles:%f update available — applying (verbose log from chezmoi may follow)…"
+            if chezmoi update --force 2>&1; then
+                print -P "%F{10}  dotfiles:%f updated ✓"
+            else
+                ec=$?
+                print -P "%F{9}  dotfiles:%f update failed (exit $ec) · run 'dotup' manually"
+                print -r -- "  dotfiles_bg_diag: pwd=$(pwd) chezmoi=$(command -v chezmoi 2>/dev/null) branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+            fi
         fi
     ) &
     disown
@@ -384,17 +388,139 @@ fi
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 
-# ─────────────────────────────────────────────────── GREETING ──────────────
-# Single-line startup message — confirms which zsh version is active.
-# (The long block of $ZSH_REVISION / $ZSH_BUILD_DATE etc. variables that were
-# here before are not standard zsh variables and printed blank lines.)
-print -P "%F{8}  zsh ${ZSH_VERSION} · %m%f"
-
-
 # ─────────────────────────────────────────────────── VERSION ───────────────
-# Semantic version of this dotfiles configuration.
+# Semantic version of this dotfiles configuration (used in diagnostics below).
 # Increment on every commit: MAJOR.MINOR.PATCH  (see CHANGELOG.md)
-#   MAJOR — incompatible structural change (new bootstrap dependency, etc.)
-#   MINOR — new feature or significant improvement
-#   PATCH — bug fix, comment correction, cosmetic tweak
 export DOTFILES_VERSION="1.6.2"
+
+
+# ─────────────────────────────────────────────────── STARTUP LOGGING ─────────
+# Default: one short line (success or problems). Optional detail via environment:
+#   MARTY_DOTFILES_LOG=warn   — success + compact tool/path warnings
+#   MARTY_DOTFILES_LOG=debug  — full paste-friendly dump
+# Legacy: MARTY_DOTFILES_DIAG_QUIET=1 forces minimal (same as unset LOG).
+# On demand:  dotdiag warn   |   dotdiag debug
+_marty_log_level=0
+if [[ -z "$MARTY_DOTFILES_DIAG_QUIET" ]]; then
+    case "${(L)MARTY_DOTFILES_LOG}" in
+        warn|warning|1) _marty_log_level=1 ;;
+        debug|verbose|2|all|true|yes) _marty_log_level=2 ;;
+    esac
+fi
+
+_marty_zsh_have_line() {
+    emulate -L zsh
+    local c="$1"
+    if command -v "$c" &>/dev/null; then
+        local p
+        p=$(command -v "$c")
+        print -r -- "  [ok] $c -> $p"
+        case "$c" in
+            chezmoi)
+                command chezmoi --version 2>&1 | command head -n 3 | while IFS= read -r __l; do print -r -- "        | $__l"; done
+                local sp ec
+                sp=$(command chezmoi source-path 2>/dev/null)
+                ec=$?
+                if [[ $ec -eq 0 && -n "$sp" ]]; then
+                    print -r -- "        | source-path=$sp  scripts=$([[ -d "$sp/scripts" ]] && echo ok || echo MISSING)"
+                else
+                    print -P "        %F{11}| source-path failed (exit $ec)%f"
+                fi
+                ;;
+            git) command git --version 2>&1 | command head -n 1 | while IFS= read -r __l; do print -r -- "        | $__l"; done ;;
+            starship)
+                command starship --version 2>&1 | command head -n 2 | while IFS= read -r __l; do print -r -- "        | $__l"; done
+                print -r -- "        | STARSHIP_CONFIG=${STARSHIP_CONFIG:-<unset>}"
+                ;;
+        esac
+    else
+        print -P "  %F{11}[warn]%f $c not on PATH"
+    fi
+}
+
+_marty_zsh_diag_emit() {
+    emulate -L zsh
+    local lvl=$1
+    local bar="══════════════════════════════════════════════════════════════"
+    if (( lvl >= 2 )); then
+        print -r -- ""
+        print -P "%F{51}$bar%f"
+        print -P "%F{51}[marty-dotfiles · zsh · debug diagnostics · paste to support]%f"
+        print -r -- "$bar"
+        print -r -- "  utc_now=$(command date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)"
+        print -r -- "  dotfiles_version=$DOTFILES_VERSION"
+        print -r -- "  zsh_version=$ZSH_VERSION  zsh_bin=${ZSH_ARGZERO:-$0}"
+        print -r -- "  chezmoi_apply_os={{ .chezmoi.os }}  chezmoi_hostname={{ .chezmoi.hostname }}"
+        print -r -- "  uname=$(command uname -a 2>/dev/null || echo n/a)"
+        print -r -- "  hostname=$(command hostname 2>/dev/null || echo n/a)  user=$(command whoami 2>/dev/null || echo n/a)"
+        print -r -- "  pwd=$(builtin pwd -L 2>/dev/null || pwd)"
+        print -r -- "  HOME=$HOME  ZDOTDIR=${ZDOTDIR:-<unset>}"
+        print -r -- "  TERM=${TERM:-<unset>}  LANG=${LANG:-<unset>}  LC_ALL=${LC_ALL:-<unset>}"
+        print -r -- "  SSH_CLIENT=${SSH_CLIENT:-<none>}  SSH_CONNECTION=${SSH_CONNECTION:-<none>}"
+        print -r -- "  dotfiles_auto_sync_git=$([[ -d ~/.local/share/chezmoi/.git ]] && echo yes || echo no)"
+        print -r -- "  path_length=${#PATH}"
+        print -r -- "  PATH=$PATH"
+        _marty_zsh_have_line chezmoi
+        _marty_zsh_have_line git
+        _marty_zsh_have_line starship
+        print -r -- "  zsh_pure=$([[ -d "$HOME/.zsh/pure" ]] && echo ok || echo missing)"
+        print -r -- "  zsh_autosuggestions=$([[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && echo ok || echo missing)"
+        print -r -- "  zsh_syntax_highlighting=$([[ -f ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && echo ok || echo missing)"
+        print -r -- "  fzf_zsh=$([[ -f ~/.fzf.zsh ]] && echo ok || echo missing)"
+        print -r -- "$bar"
+        print -P "%F{8}  hint: MARTY_DOTFILES_LOG=minimal (default) | warn | debug   ·   dotdiag%f"
+        print -r -- ""
+        return
+    fi
+    # warn (compact)
+    print -r -- ""
+    print -P "%F{51}── dotfiles · warn level (MARTY_DOTFILES_LOG=warn) ──%f"
+    print -r -- "  utc=$(command date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)  zsh=$ZSH_VERSION  host=%m  v=$DOTFILES_VERSION"
+    print -r -- "  pwd=$(builtin pwd -L 2>/dev/null || pwd)"
+    _marty_zsh_have_line chezmoi
+    _marty_zsh_have_line git
+    _marty_zsh_have_line starship
+    print -P "%F{8}  full dump: MARTY_DOTFILES_LOG=debug  or  dotdiag debug%f"
+    print -r -- ""
+}
+
+dotdiag() {
+    emulate -L zsh
+    case "${1:-debug}" in
+        -h|--help) print -r "Usage: dotdiag [warn|debug]"; return 0 ;;
+        warn|warning|1) _marty_zsh_diag_emit 1 ;;
+        debug|verbose|2|*) _marty_zsh_diag_emit 2 ;;
+    esac
+}
+
+_marty_zsh_startup_finish() {
+    emulate -L zsh
+    [[ -o interactive ]] || return
+    typeset -a _me
+    command -v chezmoi &>/dev/null || _me+=('chezmoi not on PATH')
+    for m in $_me; do
+        print -P "%F{9}  dotfiles: error - $m%f"
+    done
+    case $_marty_log_level in
+        0)
+            if (( ${#_me[@]} )); then
+                print -P "%F{11}  dotfiles: started with errors (dotdiag warn for detail)%f"
+            else
+                print -P "%F{10}  dotfiles: ok%f %F{8}· zsh $ZSH_VERSION · %m · v$DOTFILES_VERSION%f"
+            fi
+            ;;
+        1)
+            if (( ${#_me[@]} )); then
+                print -P "%F{11}  dotfiles: problems above · v$DOTFILES_VERSION%f"
+            else
+                print -P "%F{10}  dotfiles: ok%f %F{8}· zsh $ZSH_VERSION · %m · v$DOTFILES_VERSION%f"
+            fi
+            _marty_zsh_diag_emit 1
+            ;;
+        2)
+            _marty_zsh_diag_emit 2
+            ;;
+    esac
+}
+_marty_zsh_startup_finish
+unfunction _marty_zsh_startup_finish 2>/dev/null

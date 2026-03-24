@@ -19,6 +19,144 @@ if (Test-Path -LiteralPath $__martyLocalBin) {
     $env:Path = $__martyLocalBin + [IO.Path]::PathSeparator + $env:Path
 }
 
+# Startup log level: unset / minimal = one line + errors; warn = + compact detail; debug = full dump.
+# Env: MARTY_DOTFILES_LOG = warn | debug  (also 1|2, verbose, all). MARTY_DOTFILES_DIAG_QUIET=1 -> minimal.
+# On demand:  Show-MartyDotfilesDiag warn  |  Show-MartyDotfilesDiag debug  (positional or -Tier). No args -> warn tier.
+function Get-MartyDotfilesLogLevel {
+    if ($env:MARTY_DOTFILES_DIAG_QUIET) { return 0 }
+    $t = ([string]$env:MARTY_DOTFILES_LOG).Trim().ToLowerInvariant()
+    switch ($t) {
+        { $_ -in @('warn', 'warning', '1') } { return 1 }
+        { $_ -in @('debug', 'verbose', '2', 'all', 'true', 'yes') } { return 2 }
+        default { return 0 }
+    }
+}
+$MartyDotfilesLogLevel = Get-MartyDotfilesLogLevel
+
+function Marty-WriteDotfilesDiagOneCmd {
+    param([string]$Name)
+    $c = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($c) {
+        Write-Host ("  [ok] $Name -> " + $c.Source) -ForegroundColor Green
+        try {
+            switch ($Name) {
+                'chezmoi' {
+                    & chezmoi --version 2>&1 | Select-Object -First 4 | ForEach-Object { Write-Host ('        | ' + $_) -ForegroundColor DarkGray }
+                    $spRaw = & chezmoi source-path 2>$null
+                    $sp = if ($null -ne $spRaw) { [string](@($spRaw)[0]).Trim() } else { '' }
+                    if ($sp) {
+                        $sd = Join-Path $sp 'scripts'
+                        Write-Host ('        | source-path=' + $sp + '  scripts=' + (Test-Path -LiteralPath $sd)) -ForegroundColor DarkGray
+                    } else {
+                        Write-Host '        | source-path failed' -ForegroundColor Yellow
+                    }
+                }
+                'git' { Write-Host ('        | ' + (& git --version 2>&1)) -ForegroundColor DarkGray }
+                'starship' {
+                    & starship --version 2>&1 | Select-Object -First 3 | ForEach-Object { Write-Host ('        | ' + $_) -ForegroundColor DarkGray }
+                    Write-Host ('        | STARSHIP_CONFIG=' + [string]$env:STARSHIP_CONFIG) -ForegroundColor DarkGray
+                }
+            }
+        } catch {
+            Write-Host ("        | (version check failed: $($_.Exception.Message))") -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  [warn] $Name not on PATH" -ForegroundColor Yellow
+    }
+}
+
+function Marty-WriteDotfilesDiagWarn {
+    Write-Host ''
+    Write-Host '  --- dotfiles | warn (MARTY_DOTFILES_LOG=warn or Show-MartyDotfilesDiag warn) ---' -ForegroundColor DarkCyan
+    Write-Host ('  utc=' + (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') +
+        '  PS=' + $PSVersionTable.PSVersion + '  PSEdition=' + $PSVersionTable.PSEdition)
+    Write-Host ('  PWD=' + (Get-Location).Path)
+    Write-Host ('  PROFILE=' + $PROFILE)
+    Marty-WriteDotfilesDiagOneCmd chezmoi
+    Marty-WriteDotfilesDiagOneCmd git
+    Marty-WriteDotfilesDiagOneCmd starship
+    Write-Host ('  tmpl: starship={{ $starship }}  prediction={{ $prediction }}  view={{ $predview }}') -ForegroundColor DarkGray
+    try {
+        $raw = chezmoi data --format json 2>$null
+        if ($raw) {
+            $dj = $raw | ConvertFrom-Json
+            if ($dj.ps) {
+                Write-Host ('  chezmoi_data.ps=' + ($dj.ps | ConvertTo-Json -Compress -Depth 4 -ErrorAction SilentlyContinue)) -ForegroundColor DarkGray
+            }
+        } else {
+            Write-Host '  chezmoi_data=(empty or failed)' -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host ("  chezmoi_data=(exception: $($_.Exception.Message))") -ForegroundColor Yellow
+    }
+    Write-Host '  full dump: MARTY_DOTFILES_LOG=debug  or  Show-MartyDotfilesDiag debug' -ForegroundColor DarkGray
+    Write-Host ''
+}
+
+function Marty-WriteDotfilesDiagDebug {
+    $__mBar = '=============================================================='
+    Write-Host ''
+    Write-Host $__mBar -ForegroundColor DarkCyan
+    Write-Host '  [marty-dotfiles | PowerShell | DEBUG | paste to support]' -ForegroundColor Cyan
+    Write-Host $__mBar -ForegroundColor DarkCyan
+    Write-Host ('  utc_now=' + (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))
+    Write-Host ('  PSVersion=' + $PSVersionTable.PSVersion + ' PSEdition=' + $PSVersionTable.PSEdition)
+    try {
+        Write-Host ('  CLR=' + [System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription)
+    } catch {
+        Write-Host '  CLR=(unavailable)' -ForegroundColor Yellow
+    }
+    Write-Host ('  OS=' + [System.Environment]::OSVersion.VersionString)
+    Write-Host ('  Machine=' + [System.Environment]::MachineName + ' User=' + [System.Environment]::UserName + ' Interactive=' + [System.Environment]::UserInteractive)
+    try {
+        Write-Host ('  Host=' + $Host.Name + ' UI=' + $Host.UI.RawUI.WindowSize.Width + 'x' + $Host.UI.RawUI.WindowSize.Height)
+    } catch {
+        Write-Host ('  Host=' + $Host.Name + ' UI=(non-console)') -ForegroundColor DarkGray
+    }
+    Write-Host ('  PWD=' + (Get-Location).Path)
+    Write-Host ('  PROFILE=' + $PROFILE)
+    Write-Host ('  PSCommandPath=' + [string]$PSCommandPath)
+    Write-Host ('  USERPROFILE=' + $env:USERPROFILE)
+    Write-Host ('  TERM=' + [string]$env:TERM + ' NO_COLOR=' + [string]$env:NO_COLOR)
+    Write-Host ('  PathLen=' + $env:Path.Length)
+    Write-Host ('  Path=' + $env:Path)
+    Write-Host ('  tmpl_starship_block_enabled={{ $starship }}  tmpl_prediction={{ $prediction }}  tmpl_predictionview={{ $predview }}')
+    Marty-WriteDotfilesDiagOneCmd chezmoi
+    Marty-WriteDotfilesDiagOneCmd git
+    Marty-WriteDotfilesDiagOneCmd starship
+    try {
+        $raw = chezmoi data --format json 2>$null
+        if ($raw) {
+            $dj = $raw | ConvertFrom-Json
+            $psJson = '{}'
+            if ($dj.ps) { $psJson = ($dj.ps | ConvertTo-Json -Compress -Depth 4 -ErrorAction SilentlyContinue) }
+            Write-Host ('  chezmoi_data.ps=' + $psJson) -ForegroundColor DarkGray
+        } else {
+            Write-Host '  chezmoi_data=(empty or chezmoi data failed)' -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host ("  chezmoi_data=(exception: $($_.Exception.Message))") -ForegroundColor Yellow
+    }
+    Write-Host $__mBar -ForegroundColor DarkCyan
+    Write-Host '  hint: $env:MARTY_DOTFILES_LOG unset=minimal | warn | debug' -ForegroundColor DarkGray
+    Write-Host ''
+}
+
+function Show-MartyDotfilesDiag {
+    param(
+        [Parameter(Position = 0)]
+        [string] $Tier = 'warn'
+    )
+    $n = $Tier.Trim().ToLowerInvariant()
+    if ($n -in @('warn', 'warning', '1')) {
+        Marty-WriteDotfilesDiagWarn
+    } elseif ($n -in @('debug', 'verbose', '2', 'all', 'true', 'yes')) {
+        Marty-WriteDotfilesDiagDebug
+    } else {
+        Write-Error "Show-MartyDotfilesDiag: unknown tier '$Tier' (use warn or debug)."
+    }
+}
+
 # After `cd`: subfolders only, names in horizontal columns (Format-Wide).
 function Show-MartySubfoldersWide {
     $dirs = @(
@@ -98,7 +236,9 @@ function ls {
         & $cmd @splat | Show-MartyColoredChildListing
     }
 }
-Set-Alias -Name dir -Value ls -Scope Global -Force
+# Built-in `dir` is AllScope; replacing it with Set-Alias without -Option AllScope throws
+# "The AllScope option cannot be removed from the alias 'dir'." Use AllScope here too.
+Set-Alias -Name dir -Value ls -Scope Global -Option AllScope -Force
 
 # ZSH-style: cd then list (matches dot_zshrc.tmpl). Skip extra listing when -PassThru (pipeline contract).
 function cd {
@@ -308,6 +448,40 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
         # Starship build without transient API — keep normal prompt
     }
 } else {
-    Write-Warning 'Starship is enabled in dotps settings but not on PATH. Install: winget install Starship.Starship — then dotapply'
+    if ($MartyDotfilesLogLevel -ge 1) {
+        Write-Warning 'Starship is enabled in dotps settings but not on PATH. Install: winget install Starship.Starship, then dotapply'
+    }
 }
 {{- end }}
+
+# ── Startup summary (after profile body; respects MARTY_DOTFILES_LOG) ────────
+$__mProfileErrs = [System.Collections.Generic.List[string]]::new()
+if (-not (Get-Command chezmoi -ErrorAction SilentlyContinue)) {
+    [void]$__mProfileErrs.Add('chezmoi not on PATH')
+}
+foreach ($__m in $__mProfileErrs) {
+    Write-Host ('  dotfiles: error - ' + $__m) -ForegroundColor Red
+}
+if ([Environment]::UserInteractive) {
+    switch ($MartyDotfilesLogLevel) {
+        0 {
+            if ($__mProfileErrs.Count -gt 0) {
+                Write-Host '  dotfiles: started with errors (Show-MartyDotfilesDiag warn for detail)' -ForegroundColor Yellow
+            } else {
+                Write-Host ('  dotfiles: ok | PS ' + $PSVersionTable.PSVersion + ' | ' + [IO.Path]::GetFileName($PROFILE)) -ForegroundColor DarkGreen
+            }
+        }
+        1 {
+            if ($__mProfileErrs.Count -gt 0) {
+                Write-Host ('  dotfiles: problems above | PS ' + $PSVersionTable.PSVersion) -ForegroundColor Yellow
+            } else {
+                Write-Host ('  dotfiles: ok | PS ' + $PSVersionTable.PSVersion) -ForegroundColor DarkGreen
+            }
+            Marty-WriteDotfilesDiagWarn
+        }
+        2 {
+            Marty-WriteDotfilesDiagDebug
+        }
+    }
+}
+Remove-Variable -Name __mProfileErrs -ErrorAction SilentlyContinue
