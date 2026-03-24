@@ -23,6 +23,7 @@ param(
 #
 #  Or from a clone:
 #    .\install-powershell.ps1
+#  (One-liner has no script path — local-repo auto-detect only works when you run the file from a clone.)
 #
 #  Installs chezmoi if needed, runs chezmoi init --apply, optionally Starship.
 #  Starship setup follows the standard model: install binary + shell profile init.
@@ -196,9 +197,12 @@ if (-not (Get-Command chezmoi -ErrorAction SilentlyContinue)) {
     ok "chezmoi present"
 }
 
-$scriptRoot = Split-Path -Parent $PSCommandPath
-$localRepoCandidate = $scriptRoot
-$hasLocalChezmoi = Test-Path (Join-Path $localRepoCandidate '.chezmoi')
+# irm ... | iex leaves $PSCommandPath empty — do not Split-Path an empty string.
+$localRepoCandidate = $null
+if (-not [string]::IsNullOrWhiteSpace($PSCommandPath)) {
+    $localRepoCandidate = Split-Path -Parent $PSCommandPath
+}
+$hasLocalChezmoi = [bool]($localRepoCandidate -and (Test-Path (Join-Path $localRepoCandidate '.chezmoi')))
 $useSsh = $false
 if ($hasLocalChezmoi) {
     $REPO = $localRepoCandidate
