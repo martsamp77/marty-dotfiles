@@ -18,7 +18,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit",
+    "source.organizeImports": "explicit"
   },
   "editor.linkedEditing": true,
   "editor.stickyScroll.enabled": true,
@@ -32,7 +32,7 @@
 
   // ─── Language-Specific Formatters ─────────────────────────────────────────
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
 
   // ─── Files ────────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@
     "**/dist": true,
     "**/build": true,
     "**/.venv": true,
-    "**/coverage": true,
+    "**/coverage": true
   },
 
   // ─── Explorer ─────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@
     "tailwind.config.*": "tailwind.config*, postcss.config*",
     "vite.config.*": "vite.config*, vitest.config*",
     ".env": ".env.*, .envrc",
-    "README.md": "CHANGELOG.md, LICENSE",
+    "README.md": "CHANGELOG.md, LICENSE"
   },
 
   // ─── Git ──────────────────────────────────────────────────────────────────
@@ -74,10 +74,10 @@
   // Built-in terminal suggestions (shell integration) compete with PSReadLine:
   // Tab can appear to do nothing vs. Windows Terminal / cmd. Disable so Tab → PSReadLine.
   "terminal.integrated.suggest.enabled": false,
+  "terminal.integrated.cwd": "${workspaceFolder}",
   "terminal.integrated.profiles.windows": {
     "PowerShell 7 (dotfiles)": {
-      "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-      "args": ["-WorkingDirectory", "~"]
+      "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
     }
   },
   "terminal.integrated.defaultProfile.windows": "PowerShell 7 (dotfiles)",
@@ -104,6 +104,6 @@
     { "name": "React Blue", "value": "#61dafb" },
     { "name": "Something Different", "value": "#832561" },
     { "name": "Svelte Orange", "value": "#ff3d00" },
-    { "name": "Vue Green", "value": "#42b883" },
-  ],
+    { "name": "Vue Green", "value": "#42b883" }
+  ]
 }
