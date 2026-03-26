@@ -228,12 +228,13 @@ dots && git add . && git commit -m "Add .gitconfig" && git push
 
 ## Windows PowerShell
 
-No chezmoi, no Starship. Source of truth: [`windows/profile.ps1`](windows/profile.ps1).
+No chezmoi, no Starship. Edit shell customizations in [`windows/marty-profile.ps1`](windows/marty-profile.ps1). [`windows/profile.ps1`](windows/profile.ps1) is the bootstrap: it dot-sources `marty-profile.ps1` from your repo clone (path in `~/.marty-dotfiles.json`) and defines **`dotsync`**.
 
 ### How it works
 
 - **[`windows/install.ps1`](windows/install.ps1)** copies `windows/profile.ps1` to both profile locations and saves the repo path to `~/.marty-dotfiles.json`.
-- **`dotsync`** (alias in the profile) runs `git pull` then re-copies the profile.
+- At startup, the deployed profile loads `windows/marty-profile.ps1` from the repo on disk (pull the repo or run **`dotsync`** to pick up changes to that file).
+- **`dotsync`** (alias in the profile) runs `git pull` then re-copies `profile.ps1` to both locations.
 
 | Task | Command |
 |------|---------|

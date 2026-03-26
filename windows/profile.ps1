@@ -1,10 +1,19 @@
 # Marty's PowerShell profile — managed via marty-dotfiles
-# Edit in repo at windows/profile.ps1, then run: dotsync
+# Customizations: windows/marty-profile.ps1 (in repo). Sync: dotsync
 
-# ── PATH: prepend .local\bin ──────────────────────────────────────────────────
-$__martyLocalBin = Join-Path $env:USERPROFILE '.local\bin'
-if (Test-Path -LiteralPath $__martyLocalBin) {
-    $env:Path = $__martyLocalBin + [IO.Path]::PathSeparator + $env:Path
+$configFile = Join-Path $env:USERPROFILE '.marty-dotfiles.json'
+if (-not (Test-Path -LiteralPath $configFile)) {
+    Write-Warning "Marty dotfiles not configured. Run windows\install.ps1 from the repo."
+} else {
+    $repoPath = (Get-Content $configFile -Raw | ConvertFrom-Json).repoPath
+    $custom = Join-Path $repoPath 'windows\marty-profile.ps1'
+    if (-not (Test-Path -LiteralPath $repoPath)) {
+        Write-Warning "Repo not found at '$repoPath'. Update $configFile or re-run install.ps1."
+    } elseif (-not (Test-Path -LiteralPath $custom)) {
+        Write-Warning "Expected $custom — run git pull in the repo or check repo path."
+    } else {
+        . $custom
+    }
 }
 
 # ── Sync profile from repo ────────────────────────────────────────────────────

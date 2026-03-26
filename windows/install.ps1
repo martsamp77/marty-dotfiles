@@ -7,6 +7,7 @@
 # What it does:
 #   1. Saves the repo path to ~/.marty-dotfiles.json (used by dotsync)
 #   2. Copies windows/profile.ps1 to both PowerShell profile locations
+#      (profile.ps1 loads windows/marty-profile.ps1 from the repo at runtime)
 
 param(
     [string]$RepoPath
@@ -20,8 +21,13 @@ $RepoPath = (Resolve-Path $RepoPath).Path
 
 # Validate
 $source = Join-Path $RepoPath 'windows\profile.ps1'
+$custom = Join-Path $RepoPath 'windows\marty-profile.ps1'
 if (-not (Test-Path $source)) {
     Write-Error "Profile source not found: $source`nMake sure RepoPath points to the marty-dotfiles repo root."
+    exit 1
+}
+if (-not (Test-Path $custom)) {
+    Write-Error "Profile customizations not found: $custom`nMake sure RepoPath points to the marty-dotfiles repo root."
     exit 1
 }
 

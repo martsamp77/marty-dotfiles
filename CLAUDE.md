@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Personal dotfiles split into two independent systems:
 
 - **Linux/Mac** — managed by [chezmoi](https://www.chezmoi.io/). Source files at the repo root deploy to `$HOME` via `chezmoi apply`.
-- **Windows/PowerShell** — simple copy-based sync. `windows/profile.ps1` is copied to both PowerShell profile locations by `windows/install.ps1`. No chezmoi on Windows.
+- **Windows/PowerShell** — simple copy-based sync. `windows/profile.ps1` is copied to both PowerShell profile locations by `windows/install.ps1`; it loads `windows/marty-profile.ps1` from the repo clone. No chezmoi on Windows.
 
 ## Linux / Mac
 
@@ -66,21 +66,23 @@ No chezmoi, no Starship, no templates.
 ### File layout
 ```
 windows/
-  profile.ps1   # Source of truth — edit here
-  install.ps1   # First-time setup: copies profile, saves repo path
-  tools.ps1     # winget upgrades (PowerShell, Git)
+  marty-profile.ps1   # Edit here — custom functions, PATH, aliases
+  profile.ps1         # Bootstrap: dot-sources marty-profile.ps1, defines dotsync
+  install.ps1         # First-time setup: copies profile.ps1, saves repo path
+  tools.ps1           # winget upgrades (PowerShell, Git)
 ```
 
 ### First-time setup
 ```powershell
 .\windows\install.ps1
 ```
-Copies `windows/profile.ps1` to both profile locations and saves repo path to `~/.marty-dotfiles.json`.
+Copies `windows/profile.ps1` to both profile locations and saves repo path to `~/.marty-dotfiles.json`. The deployed profile loads `marty-profile.ps1` from the repo at runtime.
 
 ### Day-to-day sync
 ```powershell
-dotsync    # git pull in repo, then re-copies profile to both locations
+dotsync    # git pull in repo, then re-copies profile.ps1 to both locations
 ```
+After editing `marty-profile.ps1`, `dotsync` pulls changes; reload with `. $PROFILE` (or open a new shell).
 
 ---
 
