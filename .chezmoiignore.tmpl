@@ -6,31 +6,16 @@
 #  and any file that belongs in the repo but not in your home directory.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Repository documentation and scripts — live in the repo, not in ~/
+# Repository files — live in the repo, not in ~/
 README.md
 CHANGELOG.md
 VERSION
-.gitattributes
-.githooks
+CLAUDE.md
 install.sh
-install-starship.ps1
-install-powershell.ps1
+docs
 
-# Cursor settings source files — deployed by run_after_apply-cursor.sh,
-# not directly to $HOME.  The run_after script copies these to the
-# OS-specific Cursor settings directory.
-cursor
+# Windows PowerShell — managed separately (copy-based, no chezmoi)
+windows
 
 # Helper scripts — invoked manually, not deployed to ~/
 scripts
-
-{{- if eq .chezmoi.os "windows" }}
-# Bash apply hook is not executable on native Windows PowerShell.
-run_after_apply-cursor.sh
-{{- end }}
-
-{{- if ne .chezmoi.os "windows" }}
-# PowerShell profiles — Windows only (pwsh + Windows PowerShell 5.1)
-Documents/PowerShell/Microsoft.PowerShell_profile.ps1
-Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1
-{{- end }}

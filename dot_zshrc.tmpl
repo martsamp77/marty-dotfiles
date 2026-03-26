@@ -245,9 +245,8 @@ cd() { builtin cd "$@" && ls; }
 alias dotedit='chezmoi edit'                # dotedit ~/.zshrc  → opens source in $EDITOR
 alias dotdiff='chezmoi diff'                # Preview what will change before applying
 alias dotapply='chezmoi apply -v'           # Apply source → home (verbose)
-alias dotup='chezmoi update'                # Pull latest from GitHub and apply (fast, no tool upgrades)
 alias dots='chezmoi cd'                     # cd into the chezmoi source directory
-# Upgrade Cursor, VS Code, git, chezmoi, zsh, fzf — run separately to keep dotup fast
+# Upgrade git, chezmoi, zsh, fzf — run separately to keep applies fast
 dottools() {
   local d
   d=$(chezmoi source-path 2>/dev/null) || d="$HOME/.local/share/chezmoi"
@@ -255,17 +254,6 @@ dottools() {
     [[ -x "$d/scripts/dottools.sh" ]] && "$d/scripts/dottools.sh" || bash "$d/scripts/dottools.sh"
   else
     echo "dottools: script not found ($d/scripts/dottools.sh)"
-  fi
-}
-
-# Sync Cursor/VS Code → repo, commit with a descriptive message, push (see scripts/dotupload.sh)
-dotupload() {
-  local d
-  d=$(chezmoi source-path 2>/dev/null) || d="$HOME/.local/share/chezmoi"
-  if [[ -f "$d/scripts/dotupload.sh" ]]; then
-    [[ -x "$d/scripts/dotupload.sh" ]] && "$d/scripts/dotupload.sh" "$@" || bash "$d/scripts/dotupload.sh" "$@"
-  else
-    echo "dotupload: script not found ($d/scripts/dotupload.sh)"
   fi
 }
 
@@ -340,34 +328,6 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'
     source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 
-# ─────────────────────────────────────────────────── AUTO-SYNC ─────────────
-#
-# Every new shell session (including SSH logins) quietly checks GitHub for
-# dotfile updates.  If origin/main has new commits, `chezmoi update --force`
-# pulls and re-applies everything — all in a background process so the prompt
-# appears instantly and the session is never blocked.
-#
-# A one-line status message is printed only when an update actually occurs.
-# The block is skipped on machines where chezmoi hasn't been initialized yet
-# (i.e. ~/.local/share/chezmoi/.git doesn't exist).
-
-if [[ -d ~/.local/share/chezmoi/.git ]]; then
-    (
-        cd ~/.local/share/chezmoi || exit
-        git fetch --quiet origin main 2>/dev/null
-        if ! git diff --quiet HEAD origin/main 2>/dev/null; then
-            print -P "\n%F{14}  dotfiles:%f update available — applying (verbose log from chezmoi may follow)…"
-            if chezmoi update --force 2>&1; then
-                print -P "%F{10}  dotfiles:%f updated ✓"
-            else
-                ec=$?
-                print -P "%F{9}  dotfiles:%f update failed (exit $ec) · run 'dotup' manually"
-                print -r -- "  dotfiles_bg_diag: pwd=$(pwd) chezmoi=$(command -v chezmoi 2>/dev/null) branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-            fi
-        fi
-    ) &
-    disown
-fi
 
 # ─────────────────────────────────────────────────── START DOCKER──────────
 {{ if ne .chezmoi.os "darwin" }}
@@ -391,7 +351,7 @@ fi
 # ─────────────────────────────────────────────────── VERSION ───────────────
 # Semantic version of this dotfiles configuration (used in diagnostics below).
 # Increment on every commit: MAJOR.MINOR.PATCH  (see CHANGELOG.md)
-export DOTFILES_VERSION="1.6.2"
+export DOTFILES_VERSION="2.0.0"
 
 
 # ─────────────────────────────────────────────────── STARTUP LOGGING ─────────
@@ -457,7 +417,6 @@ _marty_zsh_diag_emit() {
         print -r -- "  HOME=$HOME  ZDOTDIR=${ZDOTDIR:-<unset>}"
         print -r -- "  TERM=${TERM:-<unset>}  LANG=${LANG:-<unset>}  LC_ALL=${LC_ALL:-<unset>}"
         print -r -- "  SSH_CLIENT=${SSH_CLIENT:-<none>}  SSH_CONNECTION=${SSH_CONNECTION:-<none>}"
-        print -r -- "  dotfiles_auto_sync_git=$([[ -d ~/.local/share/chezmoi/.git ]] && echo yes || echo no)"
         print -r -- "  path_length=${#PATH}"
         print -r -- "  PATH=$PATH"
         _marty_zsh_have_line chezmoi
