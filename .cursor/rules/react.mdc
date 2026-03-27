@@ -1,0 +1,82 @@
+---
+description: React web application conventions for Molecular Designs — Vite, shadcn/ui, TanStack Query, Zustand
+globs: ["src/**/*.tsx", "src/**/*.jsx", "vite.config.*"]
+alwaysApply: false
+---
+
+# React Rules
+
+## Project Initialization
+```bash
+npm create vite@latest md-project-name -- --template react-ts
+cd md-project-name
+npm install
+npm install react-router-dom
+npm install -D tailwindcss @tailwindcss/vite
+npx shadcn@latest init
+```
+
+## Required Libraries — Use These, Not Alternatives
+| Purpose | Library |
+|---------|---------|
+| Routing | React Router DOM |
+| Server state, data fetching, caching | TanStack Query (React Query) |
+| Global client UI state | Zustand |
+| Forms + validation | React Hook Form + Zod |
+| HTTP client | Axios (not native fetch) |
+| Date utilities | date-fns (import only needed functions) |
+| Icons | Lucide React |
+
+## UI Standards
+- **shadcn/ui** as the starting point for all UI elements — buttons, forms, dialogs, tables, etc.
+- **Tailwind CSS** for all styling — no raw CSS or CSS-in-JS unless there is no other option
+- Customize components via Tailwind classes and direct source edits — never override with external CSS
+- Never override or remove accessibility attributes on shadcn/ui components
+- Apply Molecular Designs brand colors and typography through `tailwind.config.ts`
+
+## Project Structure
+```
+src/
+  components/        # Shared/reusable UI components
+    ui/              # shadcn/ui components (generated)
+  features/          # Feature-specific modules (components, hooks, utils per feature)
+  hooks/             # Shared custom hooks
+  lib/               # Utility functions, API client, constants
+  pages/             # Route-level page components
+  types/             # Shared TypeScript types and interfaces
+  App.tsx
+  main.tsx
+```
+
+## Data Fetching
+- Use TanStack Query for all server state — **no custom useEffect fetch logic**
+- Use Axios for all HTTP calls — configure a shared Axios instance in `src/lib/api.ts`
+- Use Zod schemas for API response validation and form validation
+
+## Error Handling
+- **React Error Boundaries** required at all route-level components — never let rendering errors show a blank screen
+- User-facing error messages must be actionable and non-technical — never expose stack traces or internal error details
+- Use TanStack Query's built-in error states or try/catch for async errors
+
+## Responsive Design (required on every UI)
+- Test at minimum widths: 375px (mobile), 768px (tablet), 1280px (desktop)
+- Use Tailwind responsive prefixes: `sm:`, `md:`, `lg:`, `xl:`
+- Navigation collapses to hamburger menu or drawer on mobile
+- Tables scroll horizontally or reflow to cards on small screens
+- Touch targets minimum 44×44px
+
+## State Management
+- **TanStack Query** for anything that comes from the server
+- **Zustand** for global UI state that does not come from the server
+- Local `useState` for component-local state
+- Do not use Redux unless the project has exceptionally complex state needs — document the reason
+
+## Performance
+- Target Core Web Vitals: LCP < 2.5s, INP < 200ms, CLS < 0.1
+- Use Lighthouse for audits
+- Import date-fns functions individually — never `import * from 'date-fns'`
+
+## Deployment
+- Internal apps: deployed to MD development servers via GitHub Actions, accessible on VPN
+- Public/AWS apps: S3 + CloudFront (static), ECS (containerized), Lambda (serverless)
+- Environment-specific config via GitHub Actions Secrets and `.env.example`

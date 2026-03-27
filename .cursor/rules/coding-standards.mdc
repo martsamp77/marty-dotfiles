@@ -1,0 +1,89 @@
+---
+description: Molecular Designs enterprise coding standards
+alwaysApply: true
+---
+
+# Molecular Designs Coding Standards
+
+## Repository Naming
+- kebab-case with `md-` prefix: `md-inventory-api`, `md-shipping-portal`
+- Always lowercase, hyphens only — no underscores or camelCase
+- Add qualifier suffix when needed: `-api`, `-cli`, `-web`, `-mobile`, `-scripts`, `-infra`
+
+## Technology Stack
+Follow these choices on all new projects unless the spec explicitly overrides:
+
+| Type | Stack |
+|------|-------|
+| Web apps (internal) | Vite + React + TypeScript + Tailwind CSS + shadcn/ui |
+| Web apps (public) | Same + AWS Cognito or Auth0 |
+| Mobile | PWA-first; React Native only with documented justification and Marty approval |
+| Desktop | Tauri — only when a web app genuinely cannot meet the need |
+| CLI tools | Python by default (typer/click, rich, Poetry) |
+| APIs | Node.js (Express or Fastify) or Python (FastAPI) |
+| NetSuite | SuiteScript 2.x only |
+| Infrastructure | Terraform + GitHub Actions |
+
+**Prohibited on new projects:** Next.js, Angular, .NET, Yarn, pnpm, Bun
+
+## Package Management
+- JavaScript/TypeScript: **npm only** — always commit `package-lock.json`
+- Python: **Poetry** for non-trivial projects; pip + `requirements.txt` (pinned versions) for simple scripts — commit lock file
+- Run `npm audit` regularly; critical/high vulnerabilities must be fixed within one week
+
+## Authentication (choose based on deployment context)
+- Internal app, on-network only → **Active Directory**
+- Internal app, cloud-hosted or VPN-accessible → **Entra ID**
+- AWS-hosted, external users → **AWS Cognito**
+- External app with complex identity needs → **Auth0**
+
+## Security
+- Never commit secrets, `.env` files with real values, or credentials of any kind
+- Commit `.env.example` with placeholder values and descriptions
+- Secrets managed via env vars, AWS Secrets Manager, or GitHub Actions Secrets
+- TLS 1.2+ required for all data in transit — no exceptions
+- WCAG 2.1 Level AA required for all web and desktop UIs
+- Follow least-privilege access for all database and service credentials
+
+## What Must Never Be Committed
+- API keys, passwords, tokens, certificates with private keys
+- `.env` files with real values (commit `.env.example` only)
+- `node_modules/`, `.venv/`, `venv/`, `dist/`, `build/`, `.next/`
+- `.DS_Store`, `Thumbs.db`, IDE files (`.idea/`)
+- Database dumps or large binary files
+
+## Required Files in Every Repository
+- `README.md` — project overview, prerequisites, setup, env vars, scripts, deployment
+- `.gitignore` — appropriate for the stack
+- `.editorconfig` — standard formatting (see below)
+- `.env.example` — all required env vars with placeholder values and descriptions
+
+## EditorConfig (copy this into every repo)
+```ini
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.py]
+indent_size = 4
+```
+
+## Versioning
+- Semantic versioning: `MAJOR.MINOR.PATCH`
+- Store in `package.json`, `pyproject.toml`, or `tauri.conf.json` as appropriate
+- Tag releases in Git: `v1.2.0`
+- Maintain `CHANGELOG.md` following Keep a Changelog format
+
+## Accessibility
+- WCAG 2.1 Level AA minimum for all web UIs
+- shadcn/ui (Radix UI primitives) provides accessible defaults — never override accessibility attributes
+- Sufficient color contrast, keyboard navigation, visible focus indicators, meaningful alt text

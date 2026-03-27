@@ -1,0 +1,104 @@
+---
+description: NetSuite SuiteScript 2.x development rules for the md-netsuite-scripts repository
+globs: ["**/*_restlet.js", "**/*_scheduled.js", "**/*_userevent.js", "**/*_suitelet.js", "**/*_mapreducescript.js", "**/*_clientscript.js", "**/*_workflowaction.js"]
+alwaysApply: false
+---
+
+# NetSuite SuiteScript Rules
+
+## Version and Module Pattern
+- SuiteScript 2.x only — always include `@NApiVersion 2.x`
+- AMD-style `define()`/`require()` modules — no CommonJS
+- Always declare `@NScriptType` and `@NModuleScope`
+
+```javascript
+/**
+ * @NApiVersion 2.x
+ * @NScriptType Restlet
+ * @NModuleScope SameAccount
+ */
+define(['N/search', 'N/error', 'N/log'], function(search, error, log) {
+    // implementation
+    return { get, post };
+});
+```
+
+## File Naming
+Format: `md_{purpose}_{type}.js`
+
+| Script Type | Example Filename |
+|-------------|-----------------|
+| RESTlet | `md_saved_search_restlet.js` |
+| Scheduled Script | `md_update_inventory_scheduled.js` |
+| User Event | `md_validate_order_userevent.js` |
+| Suitelet | `md_coa_generator_suitelet.js` |
+| Map/Reduce | `md_bulk_import_mapreducescript.js` |
+| Client Script | `md_order_form_clientscript.js` |
+
+## NetSuite Internal IDs
+- Script IDs: `md_custom_{purpose}_{type}` — e.g. `md_custom_saved_search_restlet`
+- Deployment IDs: `md_custom_{purpose}_{type}_{variant}` — e.g. `md_custom_saved_search_restlet_v1`
+
+## Directory Naming (File Cabinet and repo)
+- Lowercase with underscores: `saved_search_return/`, `coa_generator/`, `20x_build_calculator/`
+
+## Required in Every Script
+- JSDoc header documenting script type, deployment, parameters, and description
+- `try/catch` in every entry-point function — never let an unhandled exception crash silently
+- `log.debug`, `log.audit`, or `log.error` for all logging — never `console.log`
+- No hardcoded values that should be script parameters or deployment configuration
+
+```javascript
+function get(requestParams) {
+    try {
+        log.debug({ title: 'get called', details: JSON.stringify(requestParams) });
+        // implementation
+        return results;
+    } catch (e) {
+        log.error({ title: 'get failed', details: e.message + '\n' + e.stack });
+        throw e;
+    }
+}
+```
+
+## Governance Limits
+- Be aware of script governance limits per script type (usage points)
+- Minimize API calls — batch reads and writes where possible
+- For large data sets, prefer Map/Reduce over Scheduled Script
+- Test governance usage in sandbox; log governance consumed in scheduled scripts
+
+## Authentication
+- New integrations: **OAuth 2.0 only**
+- TBA (Token-Based Authentication) is legacy — do not use for new integrations
+- NetSuite 2027.1+: no new SOAP integrations permitted
+- Existing TBA setups: document key generation in `keygen_notes.txt` per project folder
+
+## Repository Structure
+```
+md-netsuite-scripts/
+  saved_search_return/
+    md_saved_search_restlet.js
+    keygen_notes.txt
+  20x_build_calculator/
+    md_20x_build_calculator_suitelet.js
+  coa_generator/
+    md_coa_generator_suitelet.js
+  README.md
+```
+
+## Branch Naming
+Format: `{type}/{initials}/{short-description}`
+- `feature/cs/20x-build-calculator`
+- `fix/bk/coa-pdf-alignment`
+- `update/ms/saved-search-pagination`
+
+## Deployment Process — Follow Exactly
+1. Develop and test in **sandbox** — never in production
+2. Check Script Execution Log (`Customization > Scripting > Script Execution Log`) for errors
+3. Commit to GitHub, open PR targeting `develop`
+4. **Marty reviews and approves** — never deploy without approval
+5. Marty deploys to production: uploads to File Cabinet, creates/updates Script record and Deployment
+6. Verify in production after deployment
+
+## Validation Scripts
+Scripts used in manufacturing, QC, or regulated processes require a validation plan (IQ/OQ/PQ) before production use. Coordinate with Marty and quality assurance before beginning development.

@@ -1,0 +1,116 @@
+---
+description: REST API standards for Molecular Designs Node.js (Express/Fastify) and Python (FastAPI) services
+globs: ["src/routes/**", "src/handlers/**", "src/services/**", "src/middleware/**", "src/api/**"]
+alwaysApply: false
+---
+
+# API Rules
+
+## Framework Choices
+- **Node.js APIs:** Express (general use) or Fastify (high-throughput or greenfield)
+- **Python APIs:** FastAPI — automatic OpenAPI docs, async support, Pydantic validation
+- No other frameworks without documented justification
+
+## REST Standards
+- Standard HTTP verbs with resource-based URL paths
+- **Version the API from day one:** `/api/v1/resources`
+- JSON request and response bodies with **camelCase** property names
+- Every API must expose `GET /health` returning 200 when operational
+
+## Standard Error Response Shape
+All errors must return this exact structure:
+```json
+{
+  "status": 400,
+  "message": "Validation failed",
+  "code": "VALIDATION_ERROR",
+  "details": [
+    { "field": "email", "error": "Invalid email format" }
+  ]
+}
+```
+
+**HTTP status codes:**
+- 400 — validation / bad request
+- 401 — not authenticated
+- 403 — authenticated but forbidden
+- 404 — not found
+- 409 — conflict (duplicate, state violation)
+- 500 — unexpected server error
+
+## Input Validation
+- Validate **all** incoming data — Zod (Node.js) or Pydantic (Python)
+- Never trust client input; validate types, formats, ranges, and required fields
+- Return 400 with field-level error details for any validation failure
+
+## Authentication
+- All endpoints must be authenticated unless explicitly documented as public
+- Auth strategy by deployment context:
+  - Internal, on-network → Active Directory / Entra ID
+  - AWS-hosted, external → AWS Cognito
+- Enforce MFA for admin and sensitive operations
+- Session timeout and token expiration required
+
+## Pagination (required on all list endpoints)
+```
+GET /api/v1/orders?page=1&limit=20&sort=createdAt&order=desc&status=active
+```
+- Default `limit`: 20 — maximum `limit`: 100
+- Response shape:
+```json
+{
+  "data": [...],
+  "total": 450,
+  "page": 1,
+  "limit": 20,
+  "hasMore": true
+}
+```
+- Use cursor-based pagination (`?cursor=abc123&limit=20`) for large or frequently updated datasets
+
+## CORS
+- Specify allowed origins explicitly — **never `*` in production**
+- Include credentials in CORS config when using cookies or Authorization headers
+- Restrict allowed methods and headers to what the API actually uses
+
+## Rate Limiting
+- Implement rate limiting on all APIs, including internal ones
+- Prevents runaway scripts and loops from creating accidental denial of service
+
+## Logging
+- Structured JSON logging on every request
+- Always include: timestamp, log level, request ID, user context, response time
+- **Never log** passwords, tokens, PII, or credit card numbers
+- Log levels: `error` (failures), `warn` (non-fatal concerns), `info` (significant operations), `debug` (dev only, never in production)
+
+## Error Handling
+- Use try/catch for all async operations — never leave unhandled promise rejections
+- Set timeouts on all outbound HTTP calls (10–30 seconds)
+- Retry with exponential backoff on transient failures (network errors, 5xx)
+- **Do not retry** 4xx client errors
+- Consider circuit breaker pattern for frequently failing dependencies
+
+## OpenAPI Documentation
+- Required and must stay current with every change
+- FastAPI generates automatically
+- Express/Fastify: use `swagger-jsdoc` or `@fastify/swagger`
+- Outdated documentation is worse than no documentation
+
+## Node.js API Project Structure
+```
+md-{project}-api/
+  src/
+    routes/       # Route definitions
+    handlers/     # Request handlers / controllers
+    services/     # Business logic
+    middleware/   # Auth, validation, error handling, logging
+    models/       # Database models / schemas
+    types/        # TypeScript types and interfaces
+    utils/        # Shared utilities
+    index.ts      # Entry point
+  tests/
+  .env.example
+  package.json
+  tsconfig.json
+  README.md
+```
