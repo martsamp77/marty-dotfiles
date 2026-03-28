@@ -1,0 +1,119 @@
+---
+description: PowerShell scripting conventions for 37Metrics — Windows automation, dotfiles, and enterprise integration
+globs: ["**/*.ps1", "**/*.psm1", "**/*.psd1"]
+alwaysApply: false
+---
+
+# PowerShell Rules
+
+## When to Use PowerShell
+Use PowerShell when the task benefits from native Windows integration:
+
+- Dotfiles install/sync scripts (`windows/install.ps1`, profile tooling)
+- Windows automation, scheduled tasks, and one-off admin scripts on your machines
+- Active Directory management (when applicable)
+- Group Policy scripting
+- WMI / COM objects
+- IIS configuration
+- Windows service management
+- Registry modifications
+
+For portable cross-platform CLIs (data processing, APIs, file crunching), **Python** is often a better default.
+
+## Naming
+- Script files and function names: **Verb-Noun format** — `Get-UserInventory.ps1`, `Invoke-DataSync.ps1`
+- Only approved verbs — verify with `Get-Verb` before using any verb
+- Module files: PascalCase or Verb-Noun (`UserInventory.psm1`)
+- Parameters: PascalCase (`$UserName`, `$OutputPath`)
+
+## Required Structure
+Every function must have:
+1. Comment-based help block (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`)
+2. `[CmdletBinding()]` attribute
+3. Typed `param()` block
+
+```powershell
+function Get-UserInventory {
+    <#
+    .SYNOPSIS
+        Retrieves inventory records assigned to a user.
+    .DESCRIPTION
+        Queries the inventory system and returns all records for the specified
+        user. Results are returned as PSCustomObject array.
+    .PARAMETER UserName
+        The username to look up.
+    .EXAMPLE
+        Get-UserInventory -UserName "jsmith"
+        Returns all inventory records for jsmith.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateNotNullOrEmpty()]
+        [string]$UserName
+    )
+
+    try {
+        # implementation
+    } catch {
+        Write-Error "Failed to retrieve inventory for '$UserName': $_"
+        exit 1
+    }
+}
+```
+
+## Output and Errors
+- Write errors to the error stream: `Write-Error` — never `Write-Host` for errors
+- `Write-Verbose` for operational/diagnostic output (respects `-Verbose` flag)
+- `Write-Host` only for intentional, user-facing output
+- `Write-Output` or just return objects for pipeline-compatible output
+- Never suppress errors silently — always use `-ErrorAction` and try/catch explicitly
+
+## Production Safety
+- Add `-WhatIf` and `-Confirm` support to any script that modifies production systems or shared infrastructure
+- Log auditable actions to a file or Windows Event Log when appropriate
+- Credentials via Windows Credential Manager, OS keychain patterns, or environment variables — never hardcoded
+- Keep scripts idempotent where possible — safe to run multiple times
+- Destructive operations should support a dry run or `-WhatIf`
+
+```powershell
+# -WhatIf pattern
+[CmdletBinding(SupportsShouldProcess)]
+param(...)
+
+if ($PSCmdlet.ShouldProcess($target, "Delete user account")) {
+    Remove-ADUser -Identity $target
+}
+```
+
+## Error Handling Pattern
+```powershell
+try {
+    $result = Get-ADUser -Identity $UserName -ErrorAction Stop
+    Write-Verbose "Found user: $($result.SamAccountName)"
+} catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
+    Write-Error "User '$UserName' not found in Active Directory."
+    exit 1
+} catch {
+    Write-Error "Unexpected error: $_"
+    exit 1
+}
+```
+
+## Logging Pattern
+```powershell
+$logPath = "$env:USERPROFILE\Logs\$(Get-Date -Format 'yyyy-MM-dd')-script.log"
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $entry = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [$Level] $Message"
+    Add-Content -Path $logPath -Value $entry
+    Write-Verbose $entry
+}
+```
+
+## Quality
+- Run `Invoke-ScriptAnalyzer -Path . -Recurse` before every commit
+- Fix all warnings — do not suppress PSScriptAnalyzer rules without documented justification
+- No unapproved verbs
+- No positional parameters on public-facing functions — always named parameters
+- No aliases in scripts (use `Get-ChildItem`, not `ls` or `dir`)

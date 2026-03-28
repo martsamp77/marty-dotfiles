@@ -1,0 +1,22 @@
+# Large or generated paths — extend per application repository
+node_modules/
+dist/
+build/
+.next/
+coverage/
+.nuxt/
+out/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Rust / Tauri
+target/
+
+# Logs and OS
+*.log
+.DS_Store
+Thumbs.db

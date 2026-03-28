@@ -1,0 +1,31 @@
+---
+description: Chezmoi templates and shell assets in marty-dotfiles — preserve template syntax and validate applies
+globs: ["**/*.tmpl", "**/dot_*", "**/*.sh", "install.sh"]
+alwaysApply: false
+---
+
+# Chezmoi and dotfiles (this repo)
+
+## Scope
+
+These rules apply when editing chezmoi source files and shell bootstrap scripts at the repo root — not application TypeScript/Python.
+
+## Chezmoi templates (`*.tmpl`)
+
+- Preserve **Go template** syntax: `{{`, `}}`, `{{-`, `-}}`, `if`, `range`, and chezmoi data (e.g. `.chezmoi.os`).
+- Do not “prettify” or reformat template tags in a way that breaks parsing.
+- After non-trivial template edits, prefer verifying with `chezmoi diff` or `chezmoi apply --dry-run` when chezmoi is available.
+
+## `dot_*` source files
+
+- Remember: `dot_*` deploys to `$HOME` with a leading dot (see [CLAUDE.md](../../CLAUDE.md)).
+- Keep line endings and encoding consistent with the rest of the file (often LF for shell config).
+
+## Shell scripts (`*.sh`, `install.sh`)
+
+- Use POSIX-safe patterns when the script is meant for Linux/macOS bootstrap.
+- Fail fast where appropriate (`set -euo pipefail` when the script is already written that way — match existing style).
+
+## Windows
+
+- PowerShell in `windows/` is covered by [`powershell.mdc`](powershell.mdc).

@@ -1,0 +1,152 @@
+---
+description: 37Metrics core development rules. Always apply to all files and sessions.
+alwaysApply: true
+---
+
+# 37Metrics — Cursor Core Rules
+
+## Behavior
+
+- PLAN first, code second. For any task touching more than 2 files, explain your approach and wait for confirmation.
+- Make the smallest change that solves the problem. Do not refactor unrelated code.
+- NO ASSUMPTIONS. Read the relevant file before acting. Missing info? Search the codebase, then ask.
+- CHALLENGE bad ideas. If you see a flaw or a better approach, say so directly.
+- LOG CHECK. After any code change or bug fix, verify terminal/console output before declaring done.
+- RULE REFRESH. Re-read this file every few messages in long sessions.
+- Do not apologize for errors — fix them.
+- If code is incomplete, add a `// TODO(your-name): description` comment.
+
+## Tech Stack
+
+- **Web:** Vite + React + TypeScript + React Router + Tailwind CSS + shadcn/ui
+- **Server state:** TanStack Query (React Query)
+- **Client state:** Zustand
+- **Forms/Validation:** React Hook Form + Zod
+- **HTTP:** Axios
+- **Dates:** date-fns / date-fns-tz
+- **Icons:** Lucide React
+- **Node APIs:** Express or Fastify
+- **Python APIs:** FastAPI + Pydantic
+- **Python CLI:** typer or click + rich
+- **Desktop:** Tauri (Rust + React)
+- **Package manager:** npm only — never Yarn, pnpm, or Bun
+- **Python deps:** Poetry for projects; pip + requirements.txt for scripts
+- **Testing (JS/TS):** Vitest + Playwright
+- **Testing (Python):** pytest
+- **DB (primary):** PostgreSQL (local, Docker, or managed cloud) — **SQLite** is fine for personal apps and local tools
+- **DB (document):** MongoDB (self-hosted)
+- **DB (serverless):** DynamoDB when you are on AWS
+
+## Naming (Apply Automatically)
+
+- Repos: `37m-{project-name}` kebab-case
+- Branches: `feature/`, `fix/`, `hotfix/` in kebab-case
+- Commits: Conventional Commits — `feat(scope): description`
+- React components, classes, interfaces: PascalCase
+- Variables, functions: camelCase; hooks use `use` prefix
+- Constants: UPPER_SNAKE_CASE
+- Python: snake_case for files/folders/functions/variables; PascalCase for classes
+- SQL: snake_case columns and tables (plural); views prefixed `vw_`
+- MongoDB: camelCase fields and collections (plural)
+- Environment variables: UPPER_SNAKE_CASE; Vite browser vars use `VITE_` prefix
+
+## TypeScript
+
+- `"strict": true` always — never disable
+- No `any` — use `unknown` with type guards or generics
+- Prefer `interface` over `type` for object shapes
+- `async/await` over raw Promises; always `try/catch`
+- Explicit return types on all exported/public functions
+
+## Code Style
+
+- Write self-documenting code — name things well, do not comment what code does, comment why
+- Keep files under 300 lines — split when it improves clarity
+- Handle errors and edge cases at the top of functions (guard clauses / early returns)
+- Keep the happy path last
+- No deeply nested conditionals — use early returns
+- Imports: keep them alphabetically sorted
+- SOLID principles — separation of concerns without over-engineering
+
+## API Standards
+
+- URL pattern: `/api/v1/resources` — version from day one
+- Error shape: `{ status, message, code, details? }`
+- Every API needs `GET /health` → 200
+- JSON logging with request ID, timestamp, user context
+- CORS: explicit allowed origins only — never `*` in production
+- Validate all input — Zod (Node.js) or Pydantic (Python)
+- Default pagination: `limit=20`, max `limit=100`; return `{ data, total, page, limit, hasMore }`
+
+## Database
+
+- Store all dates in UTC; use ISO 8601 in APIs
+- Schema changes via migration tools only (Prisma Migrate, Drizzle Kit, Alembic)
+- Never edit an already-applied migration — create a new one
+- Index all WHERE, JOIN, and ORDER BY columns
+- Select only needed columns — never `SELECT *` in production
+
+## Security
+
+- TLS 1.2+ on all connections
+- Secrets via environment variables, OS keychain, 1Password CLI, GitHub Actions Secrets, or AWS Secrets Manager — never hardcoded
+- Least privilege on all DB and API connections
+- Never log passwords, tokens, or PII
+- MFA on admin operations where the service supports it
+
+## What Never to Do
+
+- No `.env` commits — only `.env.example` with placeholders
+- No `any` in TypeScript
+- No Next.js, Remix, Angular, Yarn, pnpm, or Bun without a documented reason in the project README
+- No hardcoded credentials anywhere
+- No migrations that edit already-applied migration files
+
+## Git (solo / personal)
+
+- Use feature branches when they help review or CI; direct commits to `main` are fine for solo repos if you prefer
+- On shared remotes, protect `main` and use PRs when collaborating
+
+## Project Structure Reference
+
+```
+# React / Vite
+src/components/   # Shared UI components
+src/components/ui # shadcn/ui components
+src/features/     # Feature modules
+src/hooks/        # Shared hooks
+src/lib/          # Utilities, API client, constants
+src/pages/        # Route-level pages
+src/types/        # Shared TS types
+
+# Node.js API
+src/routes/       # Route definitions
+src/handlers/     # Controllers
+src/services/     # Business logic
+src/middleware/   # Auth, validation, error handling
+src/models/       # DB schemas
+src/types/        # TS types
+src/utils/        # Shared utilities
+```
+
+## Common Commands
+
+```bash
+# Node.js
+npm install && npm run dev
+npm run test
+npm audit
+
+# Python
+poetry install && poetry run python src/main.py
+poetry run pytest
+
+# Git
+git checkout develop
+git checkout -b feature/your-feature-name
+git commit -m "feat(scope): short description"
+```
+
+## Full Standards Reference
+
+If this repository includes `coding-guidelines.md` or stack-specific docs in the README, follow those. Otherwise these Cursor rules are the source of truth.

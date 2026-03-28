@@ -1,0 +1,55 @@
+---
+description: TypeScript conventions for all 37Metrics JavaScript/TypeScript projects
+globs: ["**/*.ts", "**/*.tsx", "tsconfig.json"]
+alwaysApply: false
+---
+
+# TypeScript Rules
+
+## Version and Configuration
+- TypeScript 5.x required
+- `"strict": true` in `tsconfig.json` — never loosen or disable strict checks to work around errors
+- Node.js 20 LTS minimum — specify in `package.json` engines and `.nvmrc`:
+```json
+{ "engines": { "node": ">=20.0.0" } }
+```
+
+## Types
+- **No `any`** — use `unknown` with type guards, or generics
+- `@typescript-eslint/no-explicit-any: "error"` is enforced in ESLint — do not suppress it
+- Prefer `interface` over `type` for object shapes
+- Use `type` only for unions, mapped types, or conditional types
+- Use `T | null` over `T | undefined` for intentional absence
+- Optional chaining (`?.`) and nullish coalescing (`??`) over manual null checks
+
+## Functions
+- Explicit return types on all public and exported functions
+- Inferred return types acceptable for private/internal helpers
+- async/await over raw Promises
+- Always wrap async calls in try/catch or `.catch()` — never leave unhandled promise rejections
+
+## Naming
+| Context | Convention | Example |
+|---------|-----------|---------|
+| Variables, functions | camelCase | `getUserById`, `orderTotal` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT`, `API_BASE_URL` |
+| Classes, interfaces | PascalCase | `UserService`, `OrderSummary` |
+| React components | PascalCase | `UserProfile`, `DataTable` |
+| Custom hooks | camelCase + `use` prefix | `useAuth`, `usePagination` |
+| Enums | PascalCase (name), UPPER_SNAKE_CASE (members) | `OrderStatus.PENDING` |
+
+## File and Folder Naming
+- React component files: PascalCase (`UserProfile.tsx`, `OrderSummary.tsx`)
+- Utility and hook files: camelCase (`formatDate.ts`, `useAuth.ts`)
+- Folders: kebab-case (`user-profile/`, `order-summary/`)
+- Test files: `*.test.ts` or `*.spec.ts`, colocated with source or in `__tests__/`
+
+## Environment Variables
+- UPPER_SNAKE_CASE for all env vars: `DATABASE_URL`, `API_BASE_URL`
+- Vite projects: browser-exposed vars must use `VITE_` prefix (`VITE_API_URL`)
+- Group related vars with a common prefix: `DB_HOST`, `DB_PORT`, `DB_NAME`
+- Always provide `.env.example` with placeholder values — never commit `.env` with real values
+
+## ESLint + Prettier
+
+Do not duplicate config in chat. Each application repo should ship **`.eslintrc.cjs`** and **`.prettierrc`**. Defaults: `@typescript-eslint/recommended`, `plugin:react-hooks/recommended`, `prettier`, `@typescript-eslint/no-explicit-any: "error"`, Prettier with `printWidth` 100 and `trailingComma: "all"`. If the repo has `coding-guidelines.md`, follow it; otherwise copy patterns from an existing 37m project.

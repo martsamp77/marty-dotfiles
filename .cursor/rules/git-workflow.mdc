@@ -1,0 +1,37 @@
+---
+description: Git branching, commits, and review expectations for 37Metrics
+alwaysApply: true
+---
+
+# Git workflow
+
+## Branches
+
+- **`main`** — Production-ready; on shared repos, protect it and merge via PR when collaborating.
+- **`develop`** — Integration branch for ongoing work (when the repository uses a two-branch flow).
+- **Feature branches** — Create from `develop` (or `main` if your repo uses trunk-based flow). Use prefixes: `feature/`, `fix/`, `hotfix/` plus a short kebab-case description.
+
+## Naming
+
+- Branch names: `feature/add-inventory-export`, `fix/login-redirect`, `hotfix/payment-timeout`
+- NetSuite scripts repo may use `{type}/{initials}/{short-description}` per project docs.
+
+## Commits
+
+- Use **Conventional Commits**: `feat(scope): summary`, `fix(scope): summary`, `docs:`, `chore:`, `refactor:`, etc.
+- Keep commits focused; one logical change per commit when practical.
+
+## Pull requests
+
+- Open a PR for merges into `main` or `develop` when working with others or when your hosting requires it.
+- Describe what changed and why; link issues or specs when applicable.
+- Solo repos: direct pushes to `main` are fine if that is your workflow.
+
+## Review
+
+- Shared or production-sensitive repos: have at least one review before merging to `main` when practical.
+- Address review feedback before merge.
+
+## Releases
+
+- Tag semantic versions (`v1.2.0`) when releasing; update `CHANGELOG.md` in the same change set as the release.

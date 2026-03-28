@@ -1,0 +1,84 @@
+---
+description: Database selection, naming conventions, migrations, and backup requirements for 37Metrics projects
+globs: ["src/models/**", "src/db/**", "**/migrations/**", "**/*.prisma", "**/drizzle/**", "src/repositories/**"]
+alwaysApply: false
+---
+
+# Database Rules
+
+## Database Selection
+Choose based on data structure and access patterns:
+
+| Database | Use When |
+|----------|---------|
+| **PostgreSQL** | Structured relational data, complex queries with joins, transactions, reporting. Default for most apps. Local, Docker, or managed (RDS, Neon, etc.). |
+| **SQLite** | Personal apps, local tools, Tauri desktop, tests, and prototypes — fine as the primary store when concurrency needs are modest. |
+| **MongoDB** | Document-oriented data, flexible schemas, high write throughput, JSON-native structures (logs, config, content, user activity). Self-hosted. |
+| **DynamoDB** | Serverless/AWS-native workloads, high-throughput key-value lookups, Lambda-integrated apps. Requires careful data modeling around partition keys. |
+
+## PostgreSQL Naming Conventions
+- **Database names:** snake_case — `app_inventory`, `shipping_portal`
+- **Table names:** snake_case, **plural** — `customers`, `order_lines`, `shipment_details`
+- **Column names:** snake_case — `first_name`, `created_at`, `is_active`
+- **Stored procedures/functions:** snake_case — `get_customer_orders`
+- **Views:** snake_case with `vw_` prefix — `vw_active_customers`, `vw_order_totals`
+- **Indexes:** `ix_{table_name}_{column_name}` — `ix_customers_created_at`, `ix_orders_status`
+- **Foreign key columns:** `{referenced_table_singular}_id` — `customer_id`, `order_id`
+
+## MongoDB Naming Conventions
+- **Database names:** kebab-case — `37m-inventory`, `37m-shipping`
+- **Collection names:** camelCase, **plural** — `customers`, `orderLines`, `shipmentDetails`
+- **Field names:** camelCase — `firstName`, `createdAt`, `isActive`, `orderId`
+
+## Date and Time Handling
+- **Storage:** Always UTC in the database
+  - PostgreSQL column type: `TIMESTAMP WITH TIME ZONE`
+  - Application code: `Date` objects or ISO 8601 strings
+- **API payloads:** ISO 8601 format — `2024-02-25T14:30:00.000Z`
+- **Display:** Convert to user's timezone at render time using `date-fns-tz` or `Intl.DateTimeFormat`
+- **date-fns:** Use for all date parsing, formatting, and manipulation — import only the functions needed
+
+## Migrations (PostgreSQL — required)
+All schema changes must go through a migration tool. No manual SQL scripts on shared or production databases.
+
+**Tool by project type:**
+| Stack | Tool |
+|-------|------|
+| Node.js/TypeScript (Prisma ORM) | Prisma Migrate |
+| Node.js/TypeScript (Drizzle ORM) | Drizzle Kit |
+| Python (SQLAlchemy) | Alembic |
+
+**Rules:**
+- Store all migration files in version control alongside application code
+- **Never edit a migration that has already been applied** to staging or production — create a new one
+- Always include both `up` and `down` (rollback) logic in every migration
+- Migration names must be descriptive: `add_order_status_column`, `create_shipment_details_table`
+- Test migrations in dev → staging before applying to production
+- Apply migrations as part of the deployment pipeline, not manually
+
+## Access and Security
+- All applications connect with **least-privilege credentials** — only the permissions needed
+- No application connects with admin or superuser credentials
+- PII and sensitive data: handle according to your own data policy for that project
+- **Encryption at rest** on managed cloud databases when the provider offers it
+- **Encryption in transit required** — TLS for all database connections
+
+## Performance
+- Index all columns used in `WHERE`, `JOIN`, and `ORDER BY` clauses
+- Avoid N+1 queries — use batch loading, joins, or eager loading
+- Use `EXPLAIN ANALYZE` in PostgreSQL to verify query plans before deploying expensive queries
+- Target reasonable API latency for the workload — use Redis or in-memory caching when it helps
+- Monitor slow query logs in production
+
+## Backup Requirements (self-hosted databases)
+- **Automated daily backups minimum** when data matters
+- PostgreSQL: `pg_dump`; MongoDB: `mongodump`
+- Store backups in a separate location from the database server (S3 or network share)
+- Retain backups per your comfort level — **30 days** is a common default
+- **Test restoration periodically** — an untested backup is not a backup
+- AWS RDS: enable automated backups and point-in-time recovery when you use it
+
+## Disaster Recovery
+- Document recovery procedures in the project README or `docs/disaster-recovery.md` when production data is involved
+- For solo projects, keep expectations proportional to the app's importance
+- Test the recovery procedure occasionally for anything you cannot afford to lose
