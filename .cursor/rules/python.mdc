@@ -1,5 +1,5 @@
 ---
-description: Python conventions for CLI tools and FastAPI services for 37Metrics projects
+description: Python conventions for CLI tools and FastAPI services at Molecular Designs
 globs: ["**/*.py", "pyproject.toml", "requirements.txt"]
 alwaysApply: false
 ---
@@ -34,11 +34,10 @@ poetry install                       # creates and manages venv automatically
 | Validation + config | pydantic |
 | .env loading | python-dotenv |
 
-**Entry point in `pyproject.toml`** (use a valid Python package name under `src/`; repo folder may use `37m-` prefix):
-
+**Entry point in `pyproject.toml`:**
 ```toml
 [project.scripts]
-my-cli = "my_package.main:app"
+md-tool-name = "md_tool_name.main:app"
 ```
 
 ## API Projects
@@ -68,9 +67,9 @@ my-cli = "my_package.main:app"
 
 ## CLI Project Structure
 ```
-37m-{tool-name}-cli/
+md-{tool-name}-cli/
   src/
-    my_package/
+    md_tool_name/
       __init__.py
       main.py          # Entry point, typer/click app
       commands/        # Subcommand modules
@@ -83,9 +82,9 @@ my-cli = "my_package.main:app"
 
 ## FastAPI Project Structure
 ```
-37m-{project}-api/
+md-{project}-api/
   src/
-    my_project/
+    md_project/
       __init__.py
       main.py          # FastAPI app entry point
       routes/          # Route definitions
@@ -100,5 +99,5 @@ my-cli = "my_package.main:app"
 ```
 
 ## Security
-- Credentials via environment variables, `.env.local`, or your secrets manager — never hardcoded
+- Credentials via environment variables or AWS Secrets Manager — never hardcoded
 - Never log passwords, tokens, PII, or sensitive data

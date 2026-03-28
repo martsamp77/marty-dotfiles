@@ -1,5 +1,5 @@
 ---
-description: REST API standards for 37Metrics Node.js (Express/Fastify) and Python (FastAPI) services
+description: REST API standards for Molecular Designs Node.js (Express/Fastify) and Python (FastAPI) services
 globs: ["src/routes/**", "src/handlers/**", "src/services/**", "src/middleware/**", "src/api/**"]
 alwaysApply: false
 ---
@@ -45,11 +45,10 @@ All errors must return this exact structure:
 
 ## Authentication
 - All endpoints must be authenticated unless explicitly documented as public
-- Auth strategy by context:
-  - Personal / OAuth providers → Clerk, Supabase Auth, Auth0, GitHub OAuth, etc.
-  - Enterprise Windows → Active Directory / Entra ID when applicable
-  - AWS-hosted, external users → AWS Cognito
-- Enforce MFA for admin and sensitive operations when the IdP supports it
+- Auth strategy by deployment context:
+  - Internal, on-network → Active Directory / Entra ID
+  - AWS-hosted, external → AWS Cognito
+- Enforce MFA for admin and sensitive operations
 - Session timeout and token expiration required
 
 ## Pagination (required on all list endpoints)
@@ -75,8 +74,8 @@ GET /api/v1/orders?page=1&limit=20&sort=createdAt&order=desc&status=active
 - Restrict allowed methods and headers to what the API actually uses
 
 ## Rate Limiting
-- Implement rate limiting on all APIs exposed to the internet
-- Internal-only APIs: rate limit when it prevents runaway scripts from causing accidental overload
+- Implement rate limiting on all APIs, including internal ones
+- Prevents runaway scripts and loops from creating accidental denial of service
 
 ## Logging
 - Structured JSON logging on every request
@@ -99,7 +98,7 @@ GET /api/v1/orders?page=1&limit=20&sort=createdAt&order=desc&status=active
 
 ## Node.js API Project Structure
 ```
-37m-{project}-api/
+md-{project}-api/
   src/
     routes/       # Route definitions
     handlers/     # Request handlers / controllers

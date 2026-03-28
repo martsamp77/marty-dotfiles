@@ -1,58 +1,60 @@
-# AGENTS.md — marty-dotfiles
+# AGENTS.md
 
-This file is **Cursor Agent** context for the **marty-dotfiles** repository. It is **not** an application repo: there is no `npm run dev` here. For shipping software in another repo, you may replace or extend this file with stack-specific commands and structure.
+<!-- Edit this file before committing. Replace every [BRACKETED] placeholder. Delete this comment. -->
 
-## What this repo is
+## Project
+**[md-project-name]** — [One sentence: what this does and who uses it.]
 
-Personal **dotfiles** ([CLAUDE.md](../CLAUDE.md)):
+## Stack
+- **Runtime:** [Node.js 20 LTS | Python 3.11+]
+- **Frontend:** [Vite + React + TypeScript + Tailwind CSS + shadcn/ui | N/A]
+- **Backend:** [Express | Fastify | FastAPI | N/A]
+- **Database:** [PostgreSQL | MongoDB | DynamoDB | SQLite | N/A]
+- **Auth:** [Active Directory | Entra ID | AWS Cognito | N/A]
+- **Deployment:** [Internal MD server | AWS (ECS / Lambda / S3+CloudFront) | Datto RMM]
 
-- **Linux / Mac:** chezmoi — `dot_*.tmpl` and related templates deploy to `$HOME`.
-- **Windows:** PowerShell under `windows/` — `install.ps1`, `profile.ps1`, `marty-profile.ps1`, `dotsync`, etc.
-
-The **`.cursor/`** tree holds rules you reuse in this workspace (and can copy into other personal projects).
-
-## AI context
-
-- **Cursor** uses this file plus `.cursor/rules/`.
-- **Always-on rules:** [`37m-core.mdc`](rules/37m-core.mdc) and [`coding-standards.mdc`](rules/coding-standards.mdc).
-- **Scoped rules:** TypeScript, React, Python, API, database, NetSuite, PowerShell, chezmoi/dotfiles ([`chezmoi-dotfiles.mdc`](rules/chezmoi-dotfiles.mdc)) — see `.cursor/rules/*.mdc` frontmatter for `globs`.
-
-## Standards and specs
-
-These `.cursor` rules are the **default source of truth** for personal work. If a repo includes `coding-guidelines.md` or a project spec, follow those for that repo.
-
-For greenfield apps, add a short spec or README section when it helps; no external guidelines repository is required.
-
-## Security
-
-- Do not paste secrets, production tokens, or private keys into chat.
-- Use `.env.example` only in commits; keep real values local or in a secrets manager.
-
-## Key commands (this repo)
-
-There is no application dev server. Typical maintenance:
-
+## Key Commands
 ```bash
-git status
-git diff
-git checkout -b chore/update-cursor-rules
-# edit .cursor/rules/ or AGENTS.md
-git add . && git commit -m "docs(cursor): describe rule change"
+npm install        # install dependencies
+npm run dev        # start dev server
+npm run build      # production build
+npm run test       # run tests
+npm run lint       # eslint check
 ```
 
-On Windows after profile changes: `. $PROFILE` or open a new shell.
+## Project Structure
+```
+[Paste top-level folder structure here]
+src/
+  components/
+  features/
+  pages/
+  lib/
+  types/
+```
 
-## Do not
+## Coding Standards
+All rules are in `.cursor/rules/` and auto-apply based on file type. Key conventions:
 
-- Assume every workspace is a Vite/React monorepo — this repo is mostly shell, chezmoi, and PowerShell.
-- Weaken 37Metrics / personal standards when editing rules without a deliberate reason.
-- Commit secrets, real `.env` files, or credentials.
-- Force a corporate PR policy on solo repos; use whatever git flow you prefer.
+- Repository name: `md-[project-name]` (kebab-case with md- prefix)
+- Branching: `main` → `develop` → `feature/fix/hotfix` branches
+- Commits: Conventional Commits format (`feat`, `fix`, `docs`, `chore`, etc.)
+- All merges to `main` require **Marty Sampson** approval
+- Never commit secrets, `.env` with real values, or `node_modules/`
 
-## Approvals
+## Do Not
+- Push directly to `main` or `develop`
+- Use `any` in TypeScript — no exceptions
+- Suppress ESLint or TypeScript errors without a documented reason
+- Add new dependencies without approval
+- Hardcode credentials, connection strings, or API keys
+- Use Next.js, Angular, Yarn, pnpm, or Bun
+- [NetSuite only: Deploy to production directly — all deployments go through Marty]
 
-You own merges for personal repositories. Use PRs and reviews when collaborating.
+## Open Questions / Known Issues
+- [List anything uncertain or in progress]
 
-## Related docs
-
-- Root [README.md](../README.md) and [CLAUDE.md](../CLAUDE.md) — how dotfiles are laid out and synced.
+## Related Docs
+- Enterprise coding standards: `coding-guidelines.md`
+- [NetSuite specifics: `netsuite-development.md`]
+- [Project spec: `spec-[project-name].md`]

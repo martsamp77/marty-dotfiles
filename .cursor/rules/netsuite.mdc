@@ -1,5 +1,5 @@
 ---
-description: NetSuite SuiteScript 2.x development rules for the 37m-netsuite-scripts repository (when you work on SuiteScript)
+description: NetSuite SuiteScript 2.x development rules for the md-netsuite-scripts repository
 globs: ["**/*_restlet.js", "**/*_scheduled.js", "**/*_userevent.js", "**/*_suitelet.js", "**/*_mapreducescript.js", "**/*_clientscript.js", "**/*_workflowaction.js"]
 alwaysApply: false
 ---
@@ -24,20 +24,20 @@ define(['N/search', 'N/error', 'N/log'], function(search, error, log) {
 ```
 
 ## File Naming
-Use a **letter-first** prefix so Script IDs stay valid in NetSuite (IDs cannot start with a digit). Format: `m37m_{purpose}_{type}.js`
+Format: `md_{purpose}_{type}.js`
 
 | Script Type | Example Filename |
 |-------------|-----------------|
-| RESTlet | `m37m_saved_search_restlet.js` |
-| Scheduled Script | `m37m_update_inventory_scheduled.js` |
-| User Event | `m37m_validate_order_userevent.js` |
-| Suitelet | `m37m_coa_generator_suitelet.js` |
-| Map/Reduce | `m37m_bulk_import_mapreducescript.js` |
-| Client Script | `m37m_order_form_clientscript.js` |
+| RESTlet | `md_saved_search_restlet.js` |
+| Scheduled Script | `md_update_inventory_scheduled.js` |
+| User Event | `md_validate_order_userevent.js` |
+| Suitelet | `md_coa_generator_suitelet.js` |
+| Map/Reduce | `md_bulk_import_mapreducescript.js` |
+| Client Script | `md_order_form_clientscript.js` |
 
 ## NetSuite Internal IDs
-- Script IDs: `m37m_custom_{purpose}_{type}` — e.g. `m37m_custom_saved_search_restlet`
-- Deployment IDs: `m37m_custom_{purpose}_{type}_{variant}` — e.g. `m37m_custom_saved_search_restlet_v1`
+- Script IDs: `md_custom_{purpose}_{type}` — e.g. `md_custom_saved_search_restlet`
+- Deployment IDs: `md_custom_{purpose}_{type}_{variant}` — e.g. `md_custom_saved_search_restlet_v1`
 
 ## Directory Naming (File Cabinet and repo)
 - Lowercase with underscores: `saved_search_return/`, `coa_generator/`, `20x_build_calculator/`
@@ -75,14 +75,14 @@ function get(requestParams) {
 
 ## Repository Structure
 ```
-37m-netsuite-scripts/
+md-netsuite-scripts/
   saved_search_return/
-    m37m_saved_search_restlet.js
+    md_saved_search_restlet.js
     keygen_notes.txt
   20x_build_calculator/
-    m37m_20x_build_calculator_suitelet.js
+    md_20x_build_calculator_suitelet.js
   coa_generator/
-    m37m_coa_generator_suitelet.js
+    md_coa_generator_suitelet.js
   README.md
 ```
 
@@ -95,10 +95,10 @@ Format: `{type}/{initials}/{short-description}`
 ## Deployment Process — Follow Exactly
 1. Develop and test in **sandbox** — never in production
 2. Check Script Execution Log (`Customization > Scripting > Script Execution Log`) for errors
-3. Commit to GitHub, open PR targeting `develop` when the repo uses that flow
-4. **Peer or self review** — do not deploy untested changes
-5. Deploy to production per your runbook: File Cabinet upload, Script record, Deployment
+3. Commit to GitHub, open PR targeting `develop`
+4. **Marty reviews and approves** — never deploy without approval
+5. Marty deploys to production: uploads to File Cabinet, creates/updates Script record and Deployment
 6. Verify in production after deployment
 
 ## Validation Scripts
-Scripts used in manufacturing, QC, or regulated processes require a validation plan (IQ/OQ/PQ) before production use. Coordinate with stakeholders and quality assurance before beginning development.
+Scripts used in manufacturing, QC, or regulated processes require a validation plan (IQ/OQ/PQ) before production use. Coordinate with Marty and quality assurance before beginning development.

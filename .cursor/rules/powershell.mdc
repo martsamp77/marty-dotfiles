@@ -1,5 +1,5 @@
 ---
-description: PowerShell scripting conventions for 37Metrics — Windows automation, dotfiles, and enterprise integration
+description: PowerShell scripting conventions for Molecular Designs Windows and Active Directory automation
 globs: ["**/*.ps1", "**/*.psm1", "**/*.psd1"]
 alwaysApply: false
 ---
@@ -7,18 +7,15 @@ alwaysApply: false
 # PowerShell Rules
 
 ## When to Use PowerShell
-Use PowerShell when the task benefits from native Windows integration:
-
-- Dotfiles install/sync scripts (`windows/install.ps1`, profile tooling)
-- Windows automation, scheduled tasks, and one-off admin scripts on your machines
-- Active Directory management (when applicable)
+Use PowerShell only when the task requires deep Windows integration:
+- Active Directory management
 - Group Policy scripting
 - WMI / COM objects
 - IIS configuration
 - Windows service management
 - Registry modifications
 
-For portable cross-platform CLIs (data processing, APIs, file crunching), **Python** is often a better default.
+For everything else (data processing, API integration, file handling, automation), use Python.
 
 ## Naming
 - Script files and function names: **Verb-Noun format** — `Get-UserInventory.ps1`, `Invoke-DataSync.ps1`
@@ -39,9 +36,9 @@ function Get-UserInventory {
         Retrieves inventory records assigned to a user.
     .DESCRIPTION
         Queries the inventory system and returns all records for the specified
-        user. Results are returned as PSCustomObject array.
+        Active Directory user. Results are returned as PSCustomObject array.
     .PARAMETER UserName
-        The username to look up.
+        The Active Directory sAMAccountName (username) to look up.
     .EXAMPLE
         Get-UserInventory -UserName "jsmith"
         Returns all inventory records for jsmith.
@@ -70,11 +67,11 @@ function Get-UserInventory {
 - Never suppress errors silently — always use `-ErrorAction` and try/catch explicitly
 
 ## Production Safety
-- Add `-WhatIf` and `-Confirm` support to any script that modifies production systems or shared infrastructure
-- Log auditable actions to a file or Windows Event Log when appropriate
-- Credentials via Windows Credential Manager, OS keychain patterns, or environment variables — never hardcoded
+- Add `-WhatIf` and `-Confirm` support to any script that modifies production systems or AD
+- Log all auditable actions to a file or Windows Event Log
+- Credentials via Windows Credential Manager or environment variables — never hardcoded
 - Keep scripts idempotent where possible — safe to run multiple times
-- Destructive operations should support a dry run or `-WhatIf`
+- Scripts touching production need a `-WhatIf` dry run mode
 
 ```powershell
 # -WhatIf pattern

@@ -1,5 +1,5 @@
 ---
-description: React web application conventions for 37Metrics — Vite, shadcn/ui, TanStack Query, Zustand
+description: React web application conventions for Molecular Designs — Vite, shadcn/ui, TanStack Query, Zustand
 globs: ["src/**/*.tsx", "src/**/*.jsx", "vite.config.*"]
 alwaysApply: false
 ---
@@ -8,8 +8,8 @@ alwaysApply: false
 
 ## Project Initialization
 ```bash
-npm create vite@latest 37m-project-name -- --template react-ts
-cd 37m-project-name
+npm create vite@latest md-project-name -- --template react-ts
+cd md-project-name
 npm install
 npm install react-router-dom
 npm install -D tailwindcss @tailwindcss/vite
@@ -32,7 +32,7 @@ npx shadcn@latest init
 - **Tailwind CSS** for all styling — no raw CSS or CSS-in-JS unless there is no other option
 - Customize components via Tailwind classes and direct source edits — never override with external CSS
 - Never override or remove accessibility attributes on shadcn/ui components
-- Apply your design tokens, theme, and typography through `tailwind.config.ts`
+- Apply Molecular Designs brand colors and typography through `tailwind.config.ts`
 
 ## Project Structure
 ```
@@ -77,6 +77,6 @@ src/
 - Import date-fns functions individually — never `import * from 'date-fns'`
 
 ## Deployment
-- Personal / VPS / PaaS: use whatever the project README documents (GitHub Actions, Docker, static host, etc.)
-- AWS-style: S3 + CloudFront (static), ECS (containerized), Lambda (serverless) when you choose that stack
-- Environment-specific config via CI secrets and `.env.example`
+- Internal apps: deployed to MD development servers via GitHub Actions, accessible on VPN
+- Public/AWS apps: S3 + CloudFront (static), ECS (containerized), Lambda (serverless)
+- Environment-specific config via GitHub Actions Secrets and `.env.example`

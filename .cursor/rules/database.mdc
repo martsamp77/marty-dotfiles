@@ -1,5 +1,5 @@
 ---
-description: Database selection, naming conventions, migrations, and backup requirements for 37Metrics projects
+description: Database selection, naming conventions, migrations, and backup requirements for Molecular Designs projects
 globs: ["src/models/**", "src/db/**", "**/migrations/**", "**/*.prisma", "**/drizzle/**", "src/repositories/**"]
 alwaysApply: false
 ---
@@ -11,13 +11,13 @@ Choose based on data structure and access patterns:
 
 | Database | Use When |
 |----------|---------|
-| **PostgreSQL** | Structured relational data, complex queries with joins, transactions, reporting. Default for most apps. Local, Docker, or managed (RDS, Neon, etc.). |
-| **SQLite** | Personal apps, local tools, Tauri desktop, tests, and prototypes — fine as the primary store when concurrency needs are modest. |
+| **PostgreSQL** | Structured relational data, complex queries with joins, transactions, reporting. Default choice for most business applications. Runs on-prem or AWS RDS. |
 | **MongoDB** | Document-oriented data, flexible schemas, high write throughput, JSON-native structures (logs, config, content, user activity). Self-hosted. |
 | **DynamoDB** | Serverless/AWS-native workloads, high-throughput key-value lookups, Lambda-integrated apps. Requires careful data modeling around partition keys. |
+| **SQLite** | Local persistence in Tauri desktop apps only. Not for multi-user or server applications. |
 
 ## PostgreSQL Naming Conventions
-- **Database names:** snake_case — `app_inventory`, `shipping_portal`
+- **Database names:** snake_case — `molecular_inventory`, `shipping_portal`
 - **Table names:** snake_case, **plural** — `customers`, `order_lines`, `shipment_details`
 - **Column names:** snake_case — `first_name`, `created_at`, `is_active`
 - **Stored procedures/functions:** snake_case — `get_customer_orders`
@@ -26,7 +26,7 @@ Choose based on data structure and access patterns:
 - **Foreign key columns:** `{referenced_table_singular}_id` — `customer_id`, `order_id`
 
 ## MongoDB Naming Conventions
-- **Database names:** kebab-case — `37m-inventory`, `37m-shipping`
+- **Database names:** kebab-case — `md-inventory`, `md-shipping`
 - **Collection names:** camelCase, **plural** — `customers`, `orderLines`, `shipmentDetails`
 - **Field names:** camelCase — `firstName`, `createdAt`, `isActive`, `orderId`
 
@@ -59,26 +59,26 @@ All schema changes must go through a migration tool. No manual SQL scripts on sh
 ## Access and Security
 - All applications connect with **least-privilege credentials** — only the permissions needed
 - No application connects with admin or superuser credentials
-- PII and sensitive data: handle according to your own data policy for that project
-- **Encryption at rest** on managed cloud databases when the provider offers it
+- PII, financial records, and health data must be identified and handled per data classification policy
+- **Encryption at rest required** on all new AWS RDS instances, DynamoDB tables, and S3 buckets
 - **Encryption in transit required** — TLS for all database connections
 
 ## Performance
 - Index all columns used in `WHERE`, `JOIN`, and `ORDER BY` clauses
 - Avoid N+1 queries — use batch loading, joins, or eager loading
 - Use `EXPLAIN ANALYZE` in PostgreSQL to verify query plans before deploying expensive queries
-- Target reasonable API latency for the workload — use Redis or in-memory caching when it helps
+- Target p95 API latency under 500ms — use Redis or in-memory caching for frequently accessed data
 - Monitor slow query logs in production
 
 ## Backup Requirements (self-hosted databases)
-- **Automated daily backups minimum** when data matters
+- **Automated daily backups minimum**
 - PostgreSQL: `pg_dump`; MongoDB: `mongodump`
 - Store backups in a separate location from the database server (S3 or network share)
-- Retain backups per your comfort level — **30 days** is a common default
-- **Test restoration periodically** — an untested backup is not a backup
-- AWS RDS: enable automated backups and point-in-time recovery when you use it
+- Retain at least **30 days** of backups
+- **Test restoration quarterly** — an untested backup is not a backup
+- AWS RDS: enable automated backups and point-in-time recovery, minimum **7-day** retention
 
 ## Disaster Recovery
-- Document recovery procedures in the project README or `docs/disaster-recovery.md` when production data is involved
-- For solo projects, keep expectations proportional to the app's importance
-- Test the recovery procedure occasionally for anything you cannot afford to lose
+- Document recovery procedures in the project README or a `docs/disaster-recovery.md` file
+- RTO and RPO targets must be defined before a production database goes live
+- Test the recovery procedure at least annually
