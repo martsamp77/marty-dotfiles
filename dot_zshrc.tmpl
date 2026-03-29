@@ -58,6 +58,15 @@ setopt HIST_IGNORE_SPACE        # Commands prefixed with a space are not saved
 setopt EXTENDED_HISTORY         # Record timestamp + elapsed time per entry
 setopt HIST_NO_STORE            # Don't store the `history` command itself
 
+# No-arg `history` would list only the last 16 events (zsh fc default); use 100.
+history() {
+  if (( $# == 0 )); then
+    fc -l -100 -1
+  else
+    fc -l "$@"
+  fi
+}
+
 # ─────────────────────────────────────────────────── HISTORY MASKING ────────
 # Intercepts every command before it hits ~/.zsh_history.
 # Redacts known secret patterns; stores the masked version instead.
@@ -348,7 +357,7 @@ fi
 # ─────────────────────────────────────────────────── VERSION ───────────────
 # Semantic version of this dotfiles configuration (used in diagnostics below).
 # Increment on every commit: MAJOR.MINOR.PATCH  (see CHANGELOG.md)
-export DOTFILES_VERSION="2.0.1"
+export DOTFILES_VERSION="2.0.2"
 
 
 # ─────────────────────────────────────────────────── STARTUP LOGGING ─────────

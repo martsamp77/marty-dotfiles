@@ -12,6 +12,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning: [S
 
 ---
 
+## [2.0.2] — 2026-03-29
+
+### Changed
+- **zsh** — `history` with no arguments now lists the last 100 events (`fc -l -100 -1`); arguments are still passed through to `fc -l` for custom ranges.
+- **`DOTFILES_VERSION`** — `2.0.2`.
+
+---
+
 ## [2.0.1] — 2026-03-29
 
 ### Changed
