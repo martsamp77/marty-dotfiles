@@ -1,5 +1,5 @@
 ---
-description: NetSuite SuiteScript 2.x development rules for the md-netsuite-scripts repository
+description: NetSuite SuiteScript 2.x development rules for 37m-netsuite-scripts style repositories (when applicable)
 globs: ["**/*_restlet.js", "**/*_scheduled.js", "**/*_userevent.js", "**/*_suitelet.js", "**/*_mapreducescript.js", "**/*_clientscript.js", "**/*_workflowaction.js"]
 alwaysApply: false
 ---
@@ -24,20 +24,20 @@ define(['N/search', 'N/error', 'N/log'], function(search, error, log) {
 ```
 
 ## File Naming
-Format: `md_{purpose}_{type}.js`
+Use a **letter-first** prefix so Script IDs stay valid in NetSuite (IDs cannot start with a digit). Format: `m37m_{purpose}_{type}.js`
 
 | Script Type | Example Filename |
 |-------------|-----------------|
-| RESTlet | `md_saved_search_restlet.js` |
-| Scheduled Script | `md_update_inventory_scheduled.js` |
-| User Event | `md_validate_order_userevent.js` |
-| Suitelet | `md_coa_generator_suitelet.js` |
-| Map/Reduce | `md_bulk_import_mapreducescript.js` |
-| Client Script | `md_order_form_clientscript.js` |
+| RESTlet | `m37m_saved_search_restlet.js` |
+| Scheduled Script | `m37m_update_inventory_scheduled.js` |
+| User Event | `m37m_validate_order_userevent.js` |
+| Suitelet | `m37m_coa_generator_suitelet.js` |
+| Map/Reduce | `m37m_bulk_import_mapreducescript.js` |
+| Client Script | `m37m_order_form_clientscript.js` |
 
 ## NetSuite Internal IDs
-- Script IDs: `md_custom_{purpose}_{type}` — e.g. `md_custom_saved_search_restlet`
-- Deployment IDs: `md_custom_{purpose}_{type}_{variant}` — e.g. `md_custom_saved_search_restlet_v1`
+- Script IDs: `m37m_custom_{purpose}_{type}` — e.g. `m37m_custom_saved_search_restlet`
+- Deployment IDs: `m37m_custom_{purpose}_{type}_{variant}` — e.g. `m37m_custom_saved_search_restlet_v1`
 
 ## Directory Naming (File Cabinet and repo)
 - Lowercase with underscores: `saved_search_return/`, `coa_generator/`, `20x_build_calculator/`
@@ -47,19 +47,6 @@ Format: `md_{purpose}_{type}.js`
 - `try/catch` in every entry-point function — never let an unhandled exception crash silently
 - `log.debug`, `log.audit`, or `log.error` for all logging — never `console.log`
 - No hardcoded values that should be script parameters or deployment configuration
-
-```javascript
-function get(requestParams) {
-    try {
-        log.debug({ title: 'get called', details: JSON.stringify(requestParams) });
-        // implementation
-        return results;
-    } catch (e) {
-        log.error({ title: 'get failed', details: e.message + '\n' + e.stack });
-        throw e;
-    }
-}
-```
 
 ## Governance Limits
 - Be aware of script governance limits per script type (usage points)
@@ -75,30 +62,23 @@ function get(requestParams) {
 
 ## Repository Structure
 ```
-md-netsuite-scripts/
+37m-netsuite-scripts/
   saved_search_return/
-    md_saved_search_restlet.js
+    m37m_saved_search_restlet.js
     keygen_notes.txt
-  20x_build_calculator/
-    md_20x_build_calculator_suitelet.js
-  coa_generator/
-    md_coa_generator_suitelet.js
   README.md
 ```
 
 ## Branch Naming
 Format: `{type}/{initials}/{short-description}`
-- `feature/cs/20x-build-calculator`
-- `fix/bk/coa-pdf-alignment`
-- `update/ms/saved-search-pagination`
 
-## Deployment Process — Follow Exactly
+## Deployment Process
 1. Develop and test in **sandbox** — never in production
-2. Check Script Execution Log (`Customization > Scripting > Script Execution Log`) for errors
-3. Commit to GitHub, open PR targeting `develop`
-4. **Marty reviews and approves** — never deploy without approval
-5. Marty deploys to production: uploads to File Cabinet, creates/updates Script record and Deployment
+2. Check Script Execution Log for errors
+3. Commit to Git, open PR per team workflow
+4. Peer or designated review before production deploy
+5. Deploy per your runbook (File Cabinet, Script record, Deployment)
 6. Verify in production after deployment
 
 ## Validation Scripts
-Scripts used in manufacturing, QC, or regulated processes require a validation plan (IQ/OQ/PQ) before production use. Coordinate with Marty and quality assurance before beginning development.
+Scripts used in manufacturing, QC, or regulated processes require a validation plan before production use. Coordinate with stakeholders and quality assurance before beginning development.

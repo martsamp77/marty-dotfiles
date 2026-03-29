@@ -1,0 +1,21 @@
+---
+description: Optional — when working in a project that reserves repo-root scripts/ for another tool or machine (e.g. Ironclaw). Do not edit scripts/ from Cursor here; delegate script work per project README.
+globs: ["ironclaw/scripts/**"]
+alwaysApply: false
+---
+
+# Optional — scripts/ owned elsewhere
+
+## Policy
+
+In projects that adopt this pattern, **do not** create, edit, delete, or refactor files under **repository-root `scripts/`** from this Cursor workspace. Document the split in the project README or `.memory-bank`. Perform script changes using the workflow the project specifies (for example another agent or environment).
+
+## Globs in this template
+
+This file uses `ironclaw/scripts/**` so it **does not attach** in repos that have no `ironclaw/` directory. If your project keeps scripts at repo root `scripts/`, **copy this rule into that project’s `.cursor/rules/`** and set `globs` to `["scripts/**"]` (or the exact path your team uses).
+
+## Adding to a project
+
+1. Copy `ironclaw.mdc` into `.cursor/rules/` (or merge the policy into an existing rule).
+2. Adjust `globs` to match where reserved scripts live.
+3. Remove this file if the project does not use the split.

@@ -1,64 +1,75 @@
 ---
-description: Molecular Designs enterprise coding standards
+description: 37Metrics personal defaults supplement (extends 37m-core.mdc)
 alwaysApply: true
 ---
 
-# Molecular Designs Coding Standards
+# 37Metrics — Personal defaults
 
-## Repository Naming
-- kebab-case with `md-` prefix: `md-inventory-api`, `md-shipping-portal`
+This file **augments** [`37m-core.mdc`](37m-core.mdc). Together with the other `.cursor/rules/*.mdc` files, it is the **source of truth for Cursor** in projects that use this template (no separate enterprise guidelines repo required).
+
+## Repository naming
+
+- kebab-case with `37m-` prefix: `37m-inventory-api`, `37m-shipping-portal`
 - Always lowercase, hyphens only — no underscores or camelCase
 - Add qualifier suffix when needed: `-api`, `-cli`, `-web`, `-mobile`, `-scripts`, `-infra`
 
-## Technology Stack
+## Technology stack (extended policy)
+
 Follow these choices on all new projects unless the spec explicitly overrides:
 
 | Type | Stack |
 |------|-------|
 | Web apps (internal) | Vite + React + TypeScript + Tailwind CSS + shadcn/ui |
-| Web apps (public) | Same + AWS Cognito or Auth0 |
-| Mobile | PWA-first; React Native only with documented justification and Marty approval |
+| Web apps (public) | Same + Auth0, Clerk, Supabase Auth, GitHub OAuth, AWS Cognito, or similar |
+| Mobile | PWA-first; React Native only with a short written justification in the repo |
 | Desktop | Tauri — only when a web app genuinely cannot meet the need |
 | CLI tools | Python by default (typer/click, rich, Poetry) |
 | APIs | Node.js (Express or Fastify) or Python (FastAPI) |
-| NetSuite | SuiteScript 2.x only |
-| Infrastructure | Terraform + GitHub Actions |
+| NetSuite | SuiteScript 2.x only (when applicable) |
+| Infrastructure | Terraform + GitHub Actions, or simpler hosting when enough |
 
 **Prohibited on new projects:** Next.js, Angular, .NET, Yarn, pnpm, Bun
 
-## Package Management
+## Package management
+
 - JavaScript/TypeScript: **npm only** — always commit `package-lock.json`
 - Python: **Poetry** for non-trivial projects; pip + `requirements.txt` (pinned versions) for simple scripts — commit lock file
-- Run `npm audit` regularly; critical/high vulnerabilities must be fixed within one week
+- Run `npm audit` regularly; fix critical/high issues promptly
 
-## Authentication (choose based on deployment context)
-- Internal app, on-network only → **Active Directory**
-- Internal app, cloud-hosted or VPN-accessible → **Entra ID**
-- AWS-hosted, external users → **AWS Cognito**
-- External app with complex identity needs → **Auth0**
+## Authentication (choose based on context)
+
+- Local tools / no multi-user server → **none** or API keys in env only
+- Personal SaaS or side project → **Clerk**, **Supabase Auth**, **Auth0**, **GitHub OAuth**, or similar
+- On-network Windows integration → **Active Directory** when relevant
+- Microsoft 365 / Azure tenant → **Entra ID**
+- AWS-hosted with external users → **AWS Cognito**
 
 ## Security
+
 - Never commit secrets, `.env` files with real values, or credentials of any kind
 - Commit `.env.example` with placeholder values and descriptions
-- Secrets managed via env vars, AWS Secrets Manager, or GitHub Actions Secrets
+- Secrets: env vars, `.env.local` (gitignored), OS keychain, 1Password CLI, GitHub Actions Secrets, or AWS Secrets Manager — pick what fits the project
 - TLS 1.2+ required for all data in transit — no exceptions
-- WCAG 2.1 Level AA required for all web and desktop UIs
+- WCAG 2.1 Level AA for web and desktop UIs you ship to others
 - Follow least-privilege access for all database and service credentials
 
-## What Must Never Be Committed
+## What must never be committed
+
 - API keys, passwords, tokens, certificates with private keys
 - `.env` files with real values (commit `.env.example` only)
 - `node_modules/`, `.venv/`, `venv/`, `dist/`, `build/`, `.next/`
 - `.DS_Store`, `Thumbs.db`, IDE files (`.idea/`)
 - Database dumps or large binary files
 
-## Required Files in Every Repository
+## Required files in every application repository
+
 - `README.md` — project overview, prerequisites, setup, env vars, scripts, deployment
 - `.gitignore` — appropriate for the stack
 - `.editorconfig` — standard formatting (see below)
 - `.env.example` — all required env vars with placeholder values and descriptions
 
-## EditorConfig (copy this into every repo)
+## EditorConfig (copy into application repos)
+
 ```ini
 root = true
 
@@ -78,12 +89,14 @@ indent_size = 4
 ```
 
 ## Versioning
+
 - Semantic versioning: `MAJOR.MINOR.PATCH`
 - Store in `package.json`, `pyproject.toml`, or `tauri.conf.json` as appropriate
 - Tag releases in Git: `v1.2.0`
 - Maintain `CHANGELOG.md` following Keep a Changelog format
 
 ## Accessibility
-- WCAG 2.1 Level AA minimum for all web UIs
+
+- WCAG 2.1 Level AA minimum for web UIs you publish
 - shadcn/ui (Radix UI primitives) provides accessible defaults — never override accessibility attributes
 - Sufficient color contrast, keyboard navigation, visible focus indicators, meaningful alt text

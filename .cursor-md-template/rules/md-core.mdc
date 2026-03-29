@@ -1,9 +1,9 @@
 ---
-description: 37Metrics core development rules. Always apply to all files and sessions.
+description: Molecular Designs core development rules. Always apply to all files and sessions.
 alwaysApply: true
 ---
 
-# 37Metrics — Cursor Core Rules
+# Molecular Designs — Cursor Core Rules
 
 ## Behavior
 
@@ -33,13 +33,13 @@ alwaysApply: true
 - **Python deps:** Poetry for projects; pip + requirements.txt for scripts
 - **Testing (JS/TS):** Vitest + Playwright
 - **Testing (Python):** pytest
-- **DB (primary):** PostgreSQL (local, Docker, or managed cloud) — **SQLite** is fine for personal apps and local tools
+- **DB (primary):** PostgreSQL (internal or AWS RDS)
 - **DB (document):** MongoDB (self-hosted)
-- **DB (serverless):** DynamoDB when you are on AWS
+- **DB (serverless):** DynamoDB
 
 ## Naming (Apply Automatically)
 
-- Repos: `37m-{project-name}` kebab-case
+- Repos: `md-{project-name}` kebab-case
 - Branches: `feature/`, `fix/`, `hotfix/` in kebab-case
 - Commits: Conventional Commits — `feat(scope): description`
 - React components, classes, interfaces: PascalCase
@@ -89,23 +89,25 @@ alwaysApply: true
 ## Security
 
 - TLS 1.2+ on all connections
-- Secrets via environment variables, OS keychain, 1Password CLI, GitHub Actions Secrets, or AWS Secrets Manager — never hardcoded
+- Secrets via AWS Secrets Manager or GitHub Actions Secrets — never hardcoded
 - Least privilege on all DB and API connections
 - Never log passwords, tokens, or PII
-- MFA on admin operations where the service supports it
+- MFA on admin operations
 
 ## What Never to Do
 
 - No `.env` commits — only `.env.example` with placeholders
 - No `any` in TypeScript
-- No Next.js, Remix, Angular, Yarn, pnpm, or Bun without a documented reason in the project README
+- No Next.js, Remix, Angular, Yarn, pnpm, or Bun without written approval per organization policy
+- No direct pushes to `main` or `develop` without following team policy
 - No hardcoded credentials anywhere
 - No migrations that edit already-applied migration files
 
-## Git (solo / personal)
+## Memory bank (when present)
 
-- Use feature branches when they help review or CI; direct commits to `main` are fine for solo repos if you prefer
-- On shared remotes, protect `main` and use PRs when collaborating
+- If `.memory-bank/README.md` or `.memory-bank/INSTRUCTIONS.md` exists, read it before substantial feature work or architecture changes.
+- Use `.memory-bank/*.md` for condensed, persistent project context; refresh when decisions or phase of work changes materially.
+- Do **not** treat the memory bank as a substitute for reading the codebase and tests.
 
 ## Project Structure Reference
 
@@ -149,4 +151,4 @@ git commit -m "feat(scope): short description"
 
 ## Full Standards Reference
 
-If this repository includes `coding-guidelines.md` or stack-specific docs in the README, follow those. Otherwise these Cursor rules are the source of truth.
+See `coding-guidelines.md` at the project root when the repository maintains it, and follow internal policy documents for the complete Molecular Designs development standard. For policy questions, use your organization’s designated contact channel.

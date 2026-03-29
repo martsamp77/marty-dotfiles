@@ -1,0 +1,4 @@
+# Optional: exclude from codebase index only (files may still be @-referenced).
+# Uncomment patterns that match huge generated trees in consuming projects.
+# node_modules/
+# dist/

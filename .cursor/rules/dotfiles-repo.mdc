@@ -1,0 +1,17 @@
+---
+description: This repository is personal dotfiles plus Cursor/memory templates—not an application monorepo.
+alwaysApply: true
+---
+
+# Dotfiles and template repository
+
+## What this workspace is
+
+- **Chezmoi + Windows PowerShell** dotfiles (see [CLAUDE.md](../../CLAUDE.md)).
+- **Template bundles** at repo root: `.cursor-37m-template/`, `.cursor-md-template/`, `.memory-bank-37m-template/`, `.memory-bank-md-template/`. Those are copied into **other** projects as `.cursor/` and `.memory-bank/`; they are not loaded automatically from those folder names here.
+
+## Agent behavior
+
+- Do **not** assume `npm run dev`, a `src/` Vite app, or application APIs unless the user opened files in an app project.
+- For **application** coding standards, refer the user to copy the appropriate template folder into their app repo (see CLAUDE.md).
+- Prefer **small, local changes** to shell templates, `windows/*.ps1`, and docs when editing this repo.

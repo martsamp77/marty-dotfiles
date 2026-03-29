@@ -86,6 +86,23 @@ After editing `marty-profile.ps1`, `dotsync` pulls changes; reload with `. $PROF
 
 ---
 
+## Cursor and memory templates (for other projects)
+
+This repository also holds **copy-out templates** at the repo root (not used as Cursor’s active `.cursor` in app repos until copied):
+
+| Folder | Use |
+|--------|-----|
+| `.cursor-37m-template/` | Copy contents into a new **37Metrics / personal** app repo as `.cursor/`. |
+| `.memory-bank-37m-template/` | Copy into the app repo as `.memory-bank/`. |
+| `.cursor-md-template/` | Copy into a **Molecular Designs / work** app repo as `.cursor/`. |
+| `.memory-bank-md-template/` | Copy into the app repo as `.memory-bank/`. |
+
+**This repo’s active AI context** while you edit dotfiles here lives in [`.cursor/`](.cursor/) and [`.memory-bank/`](.memory-bank/) (minimal, repo-specific). Do not confuse with the templates.
+
+**New app checklist:** run your stack’s official scaffold (`npm create vite@latest`, `poetry new`, etc.) → copy the chosen template pair → rename/merge into `.cursor` and `.memory-bank` → fill `AGENTS.md` and memory-bank stubs.
+
+---
+
 ## Versioning
 
 Three surfaces must stay in sync:

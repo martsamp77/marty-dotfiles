@@ -1,60 +1,18 @@
-# AGENTS.md
+# AGENTS.md — marty-dotfiles (this repository)
 
-<!-- Edit this file before committing. Replace every [BRACKETED] placeholder. Delete this comment. -->
+Personal **dotfiles** and **Cursor / memory-bank templates** for other projects. See [CLAUDE.md](../CLAUDE.md) for chezmoi, Windows sync, and the six-folder template layout.
 
-## Project
-**[md-project-name]** — [One sentence: what this does and who uses it.]
+## AI context here
 
-## Stack
-- **Runtime:** [Node.js 20 LTS | Python 3.11+]
-- **Frontend:** [Vite + React + TypeScript + Tailwind CSS + shadcn/ui | N/A]
-- **Backend:** [Express | Fastify | FastAPI | N/A]
-- **Database:** [PostgreSQL | MongoDB | DynamoDB | SQLite | N/A]
-- **Auth:** [Active Directory | Entra ID | AWS Cognito | N/A]
-- **Deployment:** [Internal MD server | AWS (ECS / Lambda / S3+CloudFront) | Datto RMM]
+- **Always-on:** [`rules/dotfiles-repo.mdc`](rules/dotfiles-repo.mdc).
+- **Scoped:** [`rules/chezmoi-dotfiles.mdc`](rules/chezmoi-dotfiles.mdc) for `*.tmpl`, `dot_*`, shell bootstrap.
+- **Templates (not auto-loaded as app rules):** `.cursor-37m-template/`, `.cursor-md-template/`, `.memory-bank-*-template/` — copy into application repos as `.cursor/` and `.memory-bank/`.
+- **Persistent notes for this repo:** [`.memory-bank/`](../.memory-bank/) if present.
 
-## Key Commands
-```bash
-npm install        # install dependencies
-npm run dev        # start dev server
-npm run build      # production build
-npm run test       # run tests
-npm run lint       # eslint check
-```
+## Commands
 
-## Project Structure
-```
-[Paste top-level folder structure here]
-src/
-  components/
-  features/
-  pages/
-  lib/
-  types/
-```
+No application dev server. Typical work: `chezmoi diff`, `git status`, editing `windows/*.ps1` or templates.
 
-## Coding Standards
-All rules are in `.cursor/rules/` and auto-apply based on file type. Key conventions:
+## Security
 
-- Repository name: `md-[project-name]` (kebab-case with md- prefix)
-- Branching: `main` → `develop` → `feature/fix/hotfix` branches
-- Commits: Conventional Commits format (`feat`, `fix`, `docs`, `chore`, etc.)
-- All merges to `main` require **Marty Sampson** approval
-- Never commit secrets, `.env` with real values, or `node_modules/`
-
-## Do Not
-- Push directly to `main` or `develop`
-- Use `any` in TypeScript — no exceptions
-- Suppress ESLint or TypeScript errors without a documented reason
-- Add new dependencies without approval
-- Hardcode credentials, connection strings, or API keys
-- Use Next.js, Angular, Yarn, pnpm, or Bun
-- [NetSuite only: Deploy to production directly — all deployments go through Marty]
-
-## Open Questions / Known Issues
-- [List anything uncertain or in progress]
-
-## Related Docs
-- Enterprise coding standards: `coding-guidelines.md`
-- [NetSuite specifics: `netsuite-development.md`]
-- [Project spec: `spec-[project-name].md`]
+Do not commit secrets or real `.env` files.

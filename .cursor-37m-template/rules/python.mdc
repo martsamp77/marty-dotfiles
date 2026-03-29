@@ -1,0 +1,104 @@
+---
+description: Python conventions for CLI tools and FastAPI services for 37Metrics projects
+globs: ["**/*.py", "pyproject.toml", "requirements.txt"]
+alwaysApply: false
+---
+
+# Python Rules
+
+## Version and Environment
+- Python 3.11+ required
+- Always use a virtual environment — folder name `.venv`, never commit it
+- Add `.venv/` to `.gitignore`
+- **Poetry** for non-trivial projects; pip + `requirements.txt` (pinned versions) for simple scripts
+- Commit `poetry.lock` or `requirements.txt` to version control
+
+## Virtual Environment Setup
+```bash
+# With venv (pip projects)
+python -m venv .venv
+.venv\Scripts\Activate.ps1          # Windows PowerShell
+source .venv/bin/activate            # Linux / macOS
+
+# With Poetry
+poetry install                       # creates and manages venv automatically
+```
+
+## CLI Projects (Python is the default for all CLI tools)
+**Required libraries:**
+| Purpose | Library |
+|---------|---------|
+| CLI interface | typer or click — never argparse on new projects |
+| Terminal output | rich (tables, progress bars, color) |
+| HTTP client | requests or httpx |
+| Validation + config | pydantic |
+| .env loading | python-dotenv |
+
+**Entry point in `pyproject.toml`** (use a valid Python package name under `src/`; repo folder may use `37m-` prefix):
+
+```toml
+[project.scripts]
+my-cli = "my_package.main:app"
+```
+
+## API Projects
+- **FastAPI** for all new Python APIs — automatic OpenAPI docs, async support, Pydantic integration
+- Validate all input with Pydantic models — never trust raw request data
+- Structured JSON logging with request ID, timestamp, and user context
+
+## Naming
+| Context | Convention | Example |
+|---------|-----------|---------|
+| Files and folders | snake_case | `user_service.py`, `data_validation/` |
+| Functions and variables | snake_case | `get_order_by_id`, `user_name` |
+| Classes | PascalCase | `UserService`, `OrderRepository` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT`, `API_BASE_URL` |
+
+## Code Quality
+- Type hints on all functions — enable mypy or pyright in CI
+- `logging` module for operational output — `print` only for intentional user-facing CLI output
+- `sys.exit(0)` for success, `sys.exit(1)` or higher for errors
+- Run `ruff` and `black` before committing; configure pre-commit hooks
+- Never suppress linter warnings without a documented reason
+
+## Output and Errors
+- Write errors to stderr (`sys.stderr`) — not stdout
+- Use meaningful exit codes — document them in CLI help text
+- Use rich for user-facing tables, progress bars, and styled output
+
+## CLI Project Structure
+```
+37m-{tool-name}-cli/
+  src/
+    my_package/
+      __init__.py
+      main.py          # Entry point, typer/click app
+      commands/        # Subcommand modules
+      utils/           # Shared utilities
+  tests/
+  pyproject.toml
+  README.md
+  .env.example
+```
+
+## FastAPI Project Structure
+```
+37m-{project}-api/
+  src/
+    my_project/
+      __init__.py
+      main.py          # FastAPI app entry point
+      routes/          # Route definitions
+      services/        # Business logic
+      models/          # Pydantic models and DB schemas
+      middleware/      # Auth, logging, error handling
+      utils/
+  tests/
+  pyproject.toml
+  README.md
+  .env.example
+```
+
+## Security
+- Credentials via environment variables, `.env.local`, or your secrets manager — never hardcoded
+- Never log passwords, tokens, PII, or sensitive data

@@ -1,0 +1,37 @@
+---
+description: Git branching, commits, and review expectations for Molecular Designs
+alwaysApply: true
+---
+
+# Git workflow
+
+## Branches
+
+- **`main`** — Production-ready, protected; merge only via pull request with required approval.
+- **`develop`** — Integration branch for ongoing work (when the repository uses a two-branch flow).
+- **Feature branches** — Create from `develop` (or `main` if your repo uses trunk-based flow). Use prefixes: `feature/`, `fix/`, `hotfix/` plus a short kebab-case description.
+
+## Naming
+
+- Branch names: `feature/add-inventory-export`, `fix/login-redirect`, `hotfix/payment-timeout`
+- NetSuite scripts repo may use `{type}/{initials}/{short-description}` per internal NetSuite development policy.
+
+## Commits
+
+- Use **Conventional Commits**: `feat(scope): summary`, `fix(scope): summary`, `docs:`, `chore:`, `refactor:`, etc.
+- Keep commits focused; one logical change per commit when practical.
+
+## Pull requests
+
+- Open a PR for merges into `main` or `develop`.
+- Describe what changed and why; link issues or specs when applicable.
+- **Do not push directly to `main` or `develop`** without following team policy.
+
+## Review
+
+- Merges to **`main`** require approval per organization policy (e.g. designated approver for production-sensitive repositories).
+- Address review feedback before merge.
+
+## Releases
+
+- Tag semantic versions (`v1.2.0`) when releasing; update `CHANGELOG.md` in the same change set as the release.

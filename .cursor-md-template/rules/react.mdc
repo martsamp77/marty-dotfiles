@@ -77,6 +77,6 @@ src/
 - Import date-fns functions individually — never `import * from 'date-fns'`
 
 ## Deployment
-- Internal apps: deployed to MD development servers via GitHub Actions, accessible on VPN
+- Internal apps: deployed per organization standards (e.g. development servers via GitHub Actions, VPN access)
 - Public/AWS apps: S3 + CloudFront (static), ECS (containerized), Lambda (serverless)
 - Environment-specific config via GitHub Actions Secrets and `.env.example`
