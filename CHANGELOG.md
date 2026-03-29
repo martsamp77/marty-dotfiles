@@ -12,6 +12,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning: [S
 
 ---
 
+## [2.0.1] — 2026-03-29
+
+### Changed
+- **zsh** — Autosuggestions use history only (`ZSH_AUTOSUGGEST_STRATEGY=(history)`); dropped completion-driven ghost text and `ZSH_AUTOSUGGEST_COMPLETION_IGNORE`.
+- **zsh** — Completion completer chain is `_expand _complete` only (removed `_correct` / `_approximate` to avoid near-duplicate correction matches).
+- **`DOTFILES_VERSION`** — `2.0.1`.
+
+---
+
 ## [2.0.0] — 2026-03-26
 
 ### Changed

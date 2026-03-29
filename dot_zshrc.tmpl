@@ -106,7 +106,7 @@ else
 fi
 
 zstyle ':completion:*' auto-description 'specify: %d'
-zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' completer _expand _complete
 zstyle ':completion:*' format '%F{51}── completing %d%f'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select
@@ -305,16 +305,13 @@ ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=51'        # !350, !! etc.
 # Fish-shell-style ghost-text suggestions as you type (zsh-autosuggestions).
 # Accept with → (right arrow) or End; accept one word at a time with Ctrl+→.
 #
-# Strategy: history first, then completion as a fallback. Putting completion
-# first makes one-letter prefixes pull the *first* tab-completion (often nonsense).
-# ZSH_AUTOSUGGEST_COMPLETION_IGNORE skips completion entirely for 0–2 character
-# buffers so you do not get filesystem/command noise until you have typed more.
+# History-only: completion-based suggestions often duplicated the typed prefix or
+# felt like random guesses; Tab completion is unchanged.
 #
 # Highlight: must differ from syntax-highlighted comments (also fg=8 below) and
 # from default foreground — 241 is a mid gray on 256-color terminals; italic
 # reads as “hint” (falls back to gray-only on terminals without italic).
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_COMPLETION_IGNORE='(#s)(|?|??)(#e)'
+ZSH_AUTOSUGGEST_STRATEGY=(history)
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=241,italic'
 [[ -f ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
@@ -351,7 +348,7 @@ fi
 # ─────────────────────────────────────────────────── VERSION ───────────────
 # Semantic version of this dotfiles configuration (used in diagnostics below).
 # Increment on every commit: MAJOR.MINOR.PATCH  (see CHANGELOG.md)
-export DOTFILES_VERSION="2.0.0"
+export DOTFILES_VERSION="2.0.1"
 
 
 # ─────────────────────────────────────────────────── STARTUP LOGGING ─────────
